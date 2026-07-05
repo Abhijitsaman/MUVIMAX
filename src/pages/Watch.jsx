@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ReactPlayer from 'react-player';
-import { FiArrowLeft, FiMaximize, FiMinimize, FiPlay, FiPause, FiSkipForward, FiSkipBackward, FiVolume2, FiVolumeX, FiSettings } from 'react-icons/fi';
+import { FiArrowLeft, FiMaximize, FiMinimize, FiPlay, FiPause, FiSkipForward, FiSkipBack, FiVolume2, FiVolumeX, FiSettings } from 'react-icons/fi';
 import { useMovieDetails } from '../hooks/useMovieDetails';
 import { useAuth } from '../context/AuthContext';
 import { FirebaseService } from '../firebase/services';
@@ -250,7 +250,7 @@ const Watch = () => {
             onClick={handleSkipBackward}
             aria-label="Skip backward 10 seconds"
           >
-            <FiSkipBackward size={28} />
+            <FiSkipBack size={28} />
           </button>
 
           <button
