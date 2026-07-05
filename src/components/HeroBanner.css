@@ -1,0 +1,290 @@
+.hero-banner {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  min-height: 400px;
+  max-height: 800px;
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+.hero-banner-loading {
+  background: var(--color-background-secondary);
+}
+
+.hero-banner-skeleton {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-background-secondary) 25%,
+    var(--color-background-tertiary) 50%,
+    var(--color-background-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.hero-banner-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-banner-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+
+.hero-banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-banner-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 10, 15, 0.95) 0%,
+    rgba(10, 10, 15, 0.7) 40%,
+    rgba(10, 10, 15, 0.3) 70%,
+    rgba(10, 10, 15, 0.7) 100%
+  );
+}
+
+.hero-banner-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.hero-banner-info {
+  max-width: 600px;
+  padding: 0 48px;
+}
+
+.hero-banner-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: 16px;
+  line-height: 1.1;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.hero-banner-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+}
+
+.hero-banner-rating {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.hero-banner-year {
+  font-weight: 500;
+}
+
+.hero-banner-runtime {
+  font-weight: 500;
+}
+
+.hero-banner-genres {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hero-banner-genre {
+  padding: 2px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-banner-description {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  margin-bottom: 24px;
+  max-width: 500px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hero-banner-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-banner-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+.hero-banner-btn-primary {
+  background: var(--color-primary-gradient);
+  color: white;
+  box-shadow: 0 4px 20px var(--color-shadow);
+}
+
+.hero-banner-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px var(--color-glow);
+}
+
+.hero-banner-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.hero-banner-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.hero-banner-controls {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.hero-banner-control {
+  pointer-events: all;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  opacity: 0;
+}
+
+.hero-banner:hover .hero-banner-control {
+  opacity: 1;
+}
+
+.hero-banner-control:hover {
+  background: rgba(124, 58, 237, 0.8);
+  transform: scale(1.05);
+}
+
+.hero-banner-dots {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+.hero-banner-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.hero-banner-dot.active {
+  background: var(--color-primary);
+  width: 28px;
+  border-radius: 5px;
+}
+
+.hero-banner-dot:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 768px) {
+  .hero-banner {
+    height: 60vh;
+    min-height: 350px;
+  }
+
+  .hero-banner-title {
+    font-size: 2rem;
+  }
+
+  .hero-banner-info {
+    padding: 0 20px;
+  }
+
+  .hero-banner-description {
+    font-size: 0.9rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .hero-banner-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+
+  .hero-banner-control {
+    width: 36px;
+    height: 36px;
+    opacity: 1;
+  }
+
+  .hero-banner-gradient {
+    background: linear-gradient(
+      180deg,
+      rgba(10, 10, 15, 0.2) 0%,
+      rgba(10, 10, 15, 0.8) 60%,
+      rgba(10, 10, 15, 0.95) 100%
+    );
+  }
+}
