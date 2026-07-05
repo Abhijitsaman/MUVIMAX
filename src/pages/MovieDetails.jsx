@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiPlay, FiHeart, FiBookmark, FiShare2, FiStar, FiClock, FiCalendar, FiUser } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiPlay, FiHeart, FiBookmark, FiShare2, FiStar, FiClock, FiCalendar, FiUser, FiMessageSquare, FiX } from 'react-icons/fi';
 import { useMovieDetails } from '../hooks/useMovieDetails';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../hooks/useFavorites';
 import { useWatchlist } from '../hooks/useWatchlist';
-import { FirebaseService } from '../firebase/services';
 import { useLanguage } from '../context/LanguageContext';
+import { FirebaseService } from '../firebase/services';
 import LoginDialog from '../components/LoginDialog';
 import MovieRow from '../components/MovieRow';
+import { formatDate } from '../utils/helpers';
 import './MovieDetails.css';
 
 const MovieDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const { movie, loading, error } = useMovieDetails(id);
   const { addToFavorites, removeFromFavorites, isInFavorites } = useFavorites();
@@ -25,31 +26,48 @@ const MovieDetails = () => {
   const [isWatchlisted, setIsWatchlisted] = useState(false);
   const [userRating, setUserRating] = useState(null);
   const [averageRating, setAverageRating] = useState(0);
+  const [ratingCount, setRatingCount] = useState(0);
+  const [reviews, setReviews] = useState([]);
+  const [userReview, setUserReview] = useState(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(0);
+  const [isEditingReview, setIsEditingReview] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   useEffect(() => {
     const checkStatus = async () => {
       if (isAuthenticated && movie) {
         const fav = await isInFavorites(movie.id);
         const watch = await isInWatchlist(movie.id);
-        const rating = await FirebaseService.getRating(movie.id);
+        const rating = await FirebaseService.getRating(user.uid, movie.id);
+        const review = await FirebaseService.getReview(user.uid, movie.id);
         setIsFavorite(fav);
         setIsWatchlisted(watch);
         setUserRating(rating);
+        setUserReview(review);
+        if (review) {
+          setReviewText(review.text || '');
+          setReviewRating(review.rating || 0);
+        }
       }
     };
     checkStatus();
-  }, [isAuthenticated, movie, isInFavorites, isInWatchlist]);
+  }, [isAuthenticated, movie, user, isInFavorites, isInWatchlist]);
 
   useEffect(() => {
-    const fetchAverageRating = async () => {
+    const fetchMovieData = async () => {
       if (movie) {
         const avg = await FirebaseService.getAverageRating(movie.id);
+        const count = await FirebaseService.getRatingCount(movie.id);
+        const reviewsData = await FirebaseService.getMovieReviews(movie.id);
         setAverageRating(avg);
+        setRatingCount(count);
+        setReviews(reviewsData);
       }
     };
-    fetchAverageRating();
+    fetchMovieData();
   }, [movie]);
 
   const handleFavoriteToggle = async () => {
@@ -124,12 +142,83 @@ const MovieDetails = () => {
     }
 
     try {
-      await FirebaseService.addRating(user.uid, movie.id, rating);
+      if (userRating) {
+        await FirebaseService.updateRating(user.uid, movie.id, rating);
+      } else {
+        await FirebaseService.addRating(user.uid, movie.id, rating);
+      }
       setUserRating(rating);
       const avg = await FirebaseService.getAverageRating(movie.id);
+      const count = await FirebaseService.getRatingCount(movie.id);
       setAverageRating(avg);
+      setRatingCount(count);
     } catch (error) {
       console.error('Error rating:', error);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!isAuthenticated) {
+      setShowLoginDialog(true);
+      return;
+    }
+
+    if (!reviewText.trim() && reviewRating === 0) return;
+
+    setIsLoading(true);
+    try {
+      const reviewData = {
+        text: reviewText.trim(),
+        rating: reviewRating,
+        userDisplayName: user.displayName || 'User',
+        userPhotoURL: user.photoURL || null
+      };
+
+      if (userReview && isEditingReview) {
+        await FirebaseService.updateReview(user.uid, movie.id, reviewData);
+      } else {
+        await FirebaseService.addReview(user.uid, movie.id, reviewData);
+      }
+
+      const updatedReviews = await FirebaseService.getMovieReviews(movie.id);
+      setReviews(updatedReviews);
+      const updatedUserReview = await FirebaseService.getReview(user.uid, movie.id);
+      setUserReview(updatedUserReview);
+      setShowReviewForm(false);
+      setIsEditingReview(false);
+      setReviewText('');
+      setReviewRating(0);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!confirm('Are you sure you want to delete your review?')) return;
+
+    setIsLoading(true);
+    try {
+      await FirebaseService.deleteReview(user.uid, movie.id);
+      const updatedReviews = await FirebaseService.getMovieReviews(movie.id);
+      setReviews(updatedReviews);
+      setUserReview(null);
+      setReviewText('');
+      setReviewRating(0);
+    } catch (error) {
+      console.error('Error deleting review:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditReview = () => {
+    if (userReview) {
+      setReviewText(userReview.text || '');
+      setReviewRating(userReview.rating || 0);
+      setIsEditingReview(true);
+      setShowReviewForm(true);
     }
   };
 
@@ -189,7 +278,8 @@ const MovieDetails = () => {
               transition={{ delay: 0.1 }}
             >
               <span className="movie-details-rating">
-                <FiStar /> {averageRating.toFixed(1) || movie.rating}
+                <FiStar /> {averageRating > 0 ? averageRating.toFixed(1) : movie.rating}
+                {ratingCount > 0 && <span className="movie-details-rating-count">({ratingCount})</span>}
               </span>
               <span><FiCalendar /> {movie.year}</span>
               <span><FiClock /> {movie.runtime}</span>
@@ -272,6 +362,7 @@ const MovieDetails = () => {
                       key={star}
                       className={`movie-details-star ${userRating >= star ? 'active' : ''}`}
                       onClick={() => handleRate(star)}
+                      aria-label={`Rate ${star} stars`}
                     >
                       <FiStar size={28} />
                     </button>
@@ -300,6 +391,146 @@ const MovieDetails = () => {
                 </div>
               </motion.div>
             )}
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="movie-details-reviews">
+          <div className="movie-details-reviews-header">
+            <h3 className="movie-details-reviews-title">
+              <FiMessageSquare size={20} />
+              {t('reviews')} ({reviews.length})
+            </h3>
+            {isAuthenticated && !userReview && (
+              <button
+                className="movie-details-review-btn"
+                onClick={() => {
+                  setIsEditingReview(false);
+                  setReviewText('');
+                  setReviewRating(0);
+                  setShowReviewForm(!showReviewForm);
+                }}
+              >
+                {t('writeReview')}
+              </button>
+            )}
+            {isAuthenticated && userReview && (
+              <div className="movie-details-review-actions">
+                <button
+                  className="movie-details-review-btn"
+                  onClick={handleEditReview}
+                >
+                  {t('editReview')}
+                </button>
+                <button
+                  className="movie-details-review-btn movie-details-review-btn-danger"
+                  onClick={handleDeleteReview}
+                >
+                  {t('deleteReview')}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {showReviewForm && isAuthenticated && (
+            <motion.div
+              className="movie-details-review-form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+            >
+              <div className="movie-details-review-form-stars">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    className={`movie-details-star ${reviewRating >= star ? 'active' : ''}`}
+                    onClick={() => setReviewRating(star)}
+                    aria-label={`Rate ${star} stars`}
+                  >
+                    <FiStar size={24} />
+                  </button>
+                ))}
+              </div>
+              <textarea
+                className="movie-details-review-textarea"
+                placeholder="Write your review here..."
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                rows={4}
+              />
+              <div className="movie-details-review-form-actions">
+                <button
+                  className="movie-details-review-submit"
+                  onClick={handleSubmitReview}
+                  disabled={isLoading || (!reviewText.trim() && reviewRating === 0)}
+                >
+                  {isEditingReview ? t('editReview') : t('writeReview')}
+                </button>
+                <button
+                  className="movie-details-review-cancel"
+                  onClick={() => {
+                    setShowReviewForm(false);
+                    setIsEditingReview(false);
+                    setReviewText('');
+                    setReviewRating(0);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          <div className="movie-details-reviews-list">
+            <AnimatePresence>
+              {reviews.length === 0 ? (
+                <p className="movie-details-reviews-empty">No reviews yet. Be the first to review!</p>
+              ) : (
+                reviews.map((review, index) => (
+                  <motion.div
+                    key={review.id}
+                    className="movie-details-review-item"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <div className="movie-details-review-header">
+                      <div className="movie-details-review-user">
+                        {review.userPhotoURL ? (
+                          <img
+                            src={review.userPhotoURL}
+                            alt={review.userDisplayName}
+                            className="movie-details-review-avatar"
+                          />
+                        ) : (
+                          <div className="movie-details-review-avatar-placeholder">
+                            <FiUser size={16} />
+                          </div>
+                        )}
+                        <div>
+                          <span className="movie-details-review-username">
+                            {review.userDisplayName}
+                          </span>
+                          <span className="movie-details-review-date">
+                            {formatDate(review.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="movie-details-review-rating">
+                        {[...Array(5)].map((_, i) => (
+                          <FiStar
+                            key={i}
+                            size={16}
+                            className={i < review.rating ? 'active' : ''}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="movie-details-review-text">{review.text}</p>
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
