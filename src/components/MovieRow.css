@@ -1,0 +1,151 @@
+.movie-row {
+  padding: 12px 0 8px;
+}
+
+.movie-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+  .movie-row-header {
+    padding: 0 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .movie-row-header {
+    padding: 0 48px;
+  }
+}
+
+.movie-row-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.movie-row-wrapper {
+  position: relative;
+}
+
+.movie-row-scroll {
+  display: flex;
+  gap: 12px;
+  padding: 4px 16px 16px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  scrollbar-width: none;
+}
+
+.movie-row-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .movie-row-scroll {
+    padding: 4px 32px 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .movie-row-scroll {
+    padding: 4px 48px 16px;
+  }
+}
+
+.movie-row-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 40px;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  opacity: 0;
+}
+
+.movie-row-wrapper:hover .movie-row-arrow {
+  opacity: 1;
+}
+
+.movie-row-arrow-left {
+  left: 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.movie-row-arrow-right {
+  right: 0;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.movie-row-arrow:hover {
+  background: rgba(124, 58, 237, 0.8);
+}
+
+.movie-card-skeleton {
+  flex: 0 0 160px;
+  height: 240px;
+  border-radius: var(--radius-sm);
+  background: var(--color-background-secondary);
+  animation: shimmer 1.5s infinite;
+}
+
+@media (min-width: 480px) {
+  .movie-card-skeleton {
+    flex: 0 0 180px;
+    height: 270px;
+  }
+}
+
+@media (min-width: 768px) {
+  .movie-card-skeleton {
+    flex: 0 0 200px;
+    height: 300px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .movie-card-skeleton {
+    flex: 0 0 220px;
+    height: 330px;
+  }
+}
+
+.movie-row-error,
+.movie-row-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--color-text-secondary);
+  gap: 12px;
+}
+
+.movie-row-retry {
+  padding: 8px 24px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.movie-row-retry:hover {
+  background: var(--color-primary-light);
+  transform: translateY(-2px);
+}
