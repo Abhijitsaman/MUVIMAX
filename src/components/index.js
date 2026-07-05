@@ -1,0 +1,10 @@
+export { default as SplashScreen } from './SplashScreen';
+export { default as Header } from './Header';
+export { default as Footer } from './Footer';
+export { default as LoadingFallback } from './LoadingFallback';
+export { default as ProtectedRoute } from './ProtectedRoute';
+export { default as LoginDialog } from './LoginDialog';
+export { default as HeroBanner } from './HeroBanner';
+export { default as MovieRow } from './MovieRow';
+export { default as MovieCard } from './MovieCard';
+export { default as ContinueWatching } from './ContinueWatching';
