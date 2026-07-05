@@ -1,0 +1,95 @@
+:root {
+  --color-primary: #7c3aed;
+  --color-primary-light: #8b5cf6;
+  --color-primary-dark: #5b21b6;
+  --color-primary-gradient: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+  --color-accent: #06b6d4;
+  --color-accent-light: #22d3ee;
+  --color-background: #0a0a0f;
+  --color-background-secondary: #14141e;
+  --color-background-tertiary: #1a1a2e;
+  --color-text: #ffffff;
+  --color-text-secondary: #a0a0b0;
+  --color-text-muted: #6b6b80;
+  --color-border: #2a2a3e;
+  --color-card: #12121f;
+  --color-card-hover: #1a1a2e;
+  --color-shadow: rgba(124, 58, 237, 0.2);
+  --color-glow: rgba(124, 58, 237, 0.15);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+[data-theme="light"] {
+  --color-background: #f5f5f7;
+  --color-background-secondary: #ffffff;
+  --color-background-tertiary: #e8e8ed;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #4a4a5e;
+  --color-text-muted: #8a8a9e;
+  --color-border: #d0d0d8;
+  --color-card: #ffffff;
+  --color-card-hover: #f0f0f5;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+  --color-glow: rgba(124, 58, 237, 0.08);
+}
+
+.gradient-text {
+  background: var(--color-primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-border {
+  border-image: var(--color-primary-gradient);
+  border-image-slice: 1;
+}
+
+.gradient-bg {
+  background: var(--color-primary-gradient);
+}
+
+.btn-primary {
+  background: var(--color-primary-gradient);
+  color: white;
+  padding: 12px 28px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all var(--transition);
+  box-shadow: 0 4px 20px var(--color-shadow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px var(--color-glow);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text);
+  padding: 12px 28px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all var(--transition);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
