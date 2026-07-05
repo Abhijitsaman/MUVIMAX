@@ -1,0 +1,10 @@
+export { default as Home } from './Home';
+export { default as MovieDetails } from './MovieDetails';
+export { default as Search } from './Search';
+export { default as Watchlist } from './Watchlist';
+export { default as Favorites } from './Favorites';
+export { default as Profile } from './Profile';
+export { default as Settings } from './Settings';
+export { default as History } from './History';
+export { default as Watch } from './Watch';
+export { default as Notifications } from './Notifications';
