@@ -5,6 +5,7 @@ import SplashScreen from './components/SplashScreen';
 import Layout from './layouts/Layout';
 import LoadingFallback from './components/LoadingFallback';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const Home = lazy(() => import('./pages/Home'));
 const MovieDetails = lazy(() => import('./pages/MovieDetails'));
@@ -28,38 +29,40 @@ function App() {
     <>
       {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
       <AnimatePresence mode="wait">
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="movie/:id" element={<MovieDetails />} />
-              <Route path="search" element={<Search />} />
-              <Route path="watch/:id" element={<Watch />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="watchlist" element={
-                <ProtectedRoute>
-                  <Watchlist />
-                </ProtectedRoute>
-              } />
-              <Route path="favorites" element={
-                <ProtectedRoute>
-                  <Favorites />
-                </ProtectedRoute>
-              } />
-              <Route path="history" element={
-                <ProtectedRoute>
-                  <History />
-                </ProtectedRoute>
-              } />
-              <Route path="settings" element={<Settings />} />
-            </Route>
-          </Routes>
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="movie/:id" element={<MovieDetails />} />
+                <Route path="search" element={<Search />} />
+                <Route path="watch/:id" element={<Watch />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="watchlist" element={
+                  <ProtectedRoute>
+                    <Watchlist />
+                  </ProtectedRoute>
+                } />
+                <Route path="favorites" element={
+                  <ProtectedRoute>
+                    <Favorites />
+                  </ProtectedRoute>
+                } />
+                <Route path="history" element={
+                  <ProtectedRoute>
+                    <History />
+                  </ProtectedRoute>
+                } />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </AnimatePresence>
     </>
   );
