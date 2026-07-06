@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBell, FiCheck, FiInfo, FiFilm, FiMegaphone, FiClock, FiBellOff } from 'react-icons/fi';
+import { FiBell, FiCheck, FiInfo, FiFilm, FiAlertCircle, FiClock, FiBellOff } from 'react-icons/fi';
 import { useNotifications } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -27,7 +27,7 @@ const Notifications = () => {
       case 'update':
         return <FiInfo size={20} />;
       case 'announcement':
-        return <FiMegaphone size={20} />;
+        return <FiAlertCircle size={20} />;
       default:
         return <FiBell size={20} />;
     }
