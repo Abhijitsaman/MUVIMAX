@@ -1,228 +1,216 @@
-const MOVIES_DB = [
-  {
-    id: '1',
-    title: 'The Last Horizon',
-    description: 'A journey beyond the stars to discover the truth about humanity\'s origins.',
-    backdrop: 'https://picsum.photos/1920/1080?random=1',
-    poster: 'https://picsum.photos/300/450?random=1',
-    year: 2024,
-    rating: 8.7,
-    genres: ['Sci-Fi', 'Adventure', 'Drama'],
-    runtime: '148 min',
-    cast: ['Emma Watson', 'Tom Hanks', 'Scarlett Johansson'],
-    trailer: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    category: 'trending',
-    featured: true
-  },
-  {
-    id: '2',
-    title: 'Shadows of Eternity',
-    description: 'A detective uncovers a conspiracy that spans centuries.',
-    backdrop: 'https://picsum.photos/1920/1080?random=2',
-    poster: 'https://picsum.photos/300/450?random=2',
-    year: 2023,
-    rating: 8.4,
-    genres: ['Thriller', 'Mystery', 'Crime'],
-    runtime: '132 min',
-    cast: ['Leonardo DiCaprio', 'Emily Blunt', 'Michael B. Jordan'],
-    trailer: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    category: 'popular'
-  },
-  {
-    id: '3',
-    title: 'Celestial Echoes',
-    description: 'Music that connects the universe.',
-    backdrop: 'https://picsum.photos/1920/1080?random=3',
-    poster: 'https://picsum.photos/300/450?random=3',
-    year: 2024,
-    rating: 9.1,
-    genres: ['Drama', 'Music', 'Romance'],
-    runtime: '115 min',
-    cast: ['Emma Stone', 'Ryan Gosling', 'Meryl Streep'],
-    trailer: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    category: 'newReleases'
-  },
-  {
-    id: '4',
-    title: 'The Silent King',
-    description: 'A ruler must choose between power and peace.',
-    backdrop: 'https://picsum.photos/1920/1080?random=4',
-    poster: 'https://picsum.photos/300/450?random=4',
-    year: 2023,
-    rating: 7.9,
-    genres: ['Action', 'Drama', 'War'],
-    runtime: '156 min',
-    cast: ['Hugh Jackman', 'Christian Bale', 'Zoe Saldana'],
-    trailer: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    category: 'topRated'
-  },
-  {
-    id: '5',
-    title: 'Echoes of Tomorrow',
-    description: 'A time traveler fights to save the future.',
-    backdrop: 'https://picsum.photos/1920/1080?random=5',
-    poster: 'https://picsum.photos/300/450?random=5',
-    year: 2024,
-    rating: 8.2,
-    genres: ['Sci-Fi', 'Action', 'Adventure'],
-    runtime: '140 min',
-    cast: ['Chris Pratt', 'Anne Hathaway', 'Samuel L. Jackson'],
-    trailer: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    category: 'trending'
-  },
-  {
-    id: '6',
-    title: 'Whispers in the Dark',
-    description: 'A horror story that will keep you awake.',
-    backdrop: 'https://picsum.photos/1920/1080?random=6',
-    poster: 'https://picsum.photos/300/450?random=6',
-    year: 2023,
-    rating: 7.6,
-    genres: ['Horror', 'Mystery', 'Thriller'],
-    runtime: '98 min',
-    cast: ['Florence Pugh', 'Willem Dafoe', 'Anya Taylor-Joy'],
-    trailer: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-    category: 'popular'
-  },
-  {
-    id: '7',
-    title: 'The Laughing Philosopher',
-    description: 'A comedy about finding meaning in chaos.',
-    backdrop: 'https://picsum.photos/1920/1080?random=7',
-    poster: 'https://picsum.photos/300/450?random=7',
-    year: 2024,
-    rating: 8.0,
-    genres: ['Comedy', 'Drama'],
-    runtime: '105 min',
-    cast: ['Denzel Washington', 'Julia Roberts', 'Kevin Hart'],
-    trailer: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-    category: 'newReleases'
-  },
-  {
-    id: '8',
-    title: 'Frozen Hearts',
-    description: 'A romance that defies all odds.',
-    backdrop: 'https://picsum.photos/1920/1080?random=8',
-    poster: 'https://picsum.photos/300/450?random=8',
-    year: 2023,
-    rating: 8.9,
-    genres: ['Romance', 'Drama'],
-    runtime: '118 min',
-    cast: ['Timothée Chalamet', 'Saoirse Ronan', 'Lucas Hedges'],
-    trailer: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-    category: 'topRated'
-  },
-  {
-    id: '9',
-    title: 'The Animated Universe',
-    description: 'An animated adventure for the whole family.',
-    backdrop: 'https://picsum.photos/1920/1080?random=9',
-    poster: 'https://picsum.photos/300/450?random=9',
-    year: 2024,
-    rating: 8.3,
-    genres: ['Animation', 'Family', 'Adventure'],
-    runtime: '90 min',
-    cast: ['Tom Holland', 'Zendaya', 'Jack Black'],
-    trailer: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCar.mp4',
-    category: 'animation'
-  },
-  {
-    id: '10',
-    title: 'Gangster\'s Paradise',
-    description: 'The rise and fall of a crime empire.',
-    backdrop: 'https://picsum.photos/1920/1080?random=10',
-    poster: 'https://picsum.photos/300/450?random=10',
-    year: 2023,
-    rating: 8.5,
-    genres: ['Crime', 'Drama', 'Action'],
-    runtime: '162 min',
-    cast: ['Robert De Niro', 'Al Pacino', 'Joe Pesci'],
-    trailer: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
-    category: 'popular'
-  }
-];
-
-const GENRE_MAP = {
-  'action': ['Action', 'Crime', 'War', 'Adventure'],
-  'comedy': ['Comedy'],
-  'drama': ['Drama'],
-  'horror': ['Horror'],
-  'romance': ['Romance'],
-  'thriller': ['Thriller', 'Mystery', 'Crime'],
-  'animation': ['Animation'],
-  'sci-fi': ['Sci-Fi'],
-  'family': ['Family', 'Animation']
-};
+import { db } from '../firebase/config';
+import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 
 export const movieService = {
   async getMovies() {
-    return MOVIES_DB;
+    try {
+      const moviesRef = collection(db, 'movies');
+      const snapshot = await getDocs(moviesRef);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+      return [];
+    }
   },
 
   async getMovieById(id) {
-    const movie = MOVIES_DB.find(m => m.id === id);
-    if (!movie) {
-      throw new Error('Movie not found');
+    try {
+      const movieRef = doc(db, 'movies', id);
+      const movieDoc = await getDoc(movieRef);
+      if (movieDoc.exists()) {
+        return { id: movieDoc.id, ...movieDoc.data() };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching movie:', error);
+      return null;
     }
-    return movie;
   },
 
-  async getTrending(limit = 20) {
-    const trending = MOVIES_DB.filter(m => m.category === 'trending' || m.featured);
-    return trending.slice(0, limit);
+  async getMoviesByCategory(category, limitCount = 20) {
+    try {
+      const moviesRef = collection(db, 'movies');
+      const q = query(
+        moviesRef,
+        where('category', '==', category),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error fetching movies by category:', error);
+      return [];
+    }
   },
 
-  async getPopular(limit = 20) {
-    const popular = MOVIES_DB.filter(m => m.category === 'popular');
-    return popular.slice(0, limit);
+  async getTrending(limitCount = 20) {
+    try {
+      const moviesRef = collection(db, 'movies');
+      const q = query(
+        moviesRef,
+        where('isTrending', '==', true),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error fetching trending movies:', error);
+      return [];
+    }
   },
 
-  async getNewReleases(limit = 20) {
-    const releases = MOVIES_DB.filter(m => m.category === 'newReleases');
-    return releases.slice(0, limit);
+  async getPopular(limitCount = 20) {
+    try {
+      const moviesRef = collection(db, 'movies');
+      const q = query(
+        moviesRef,
+        where('isPopular', '==', true),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error fetching popular movies:', error);
+      return [];
+    }
   },
 
-  async getTopRated(limit = 20) {
-    const topRated = MOVIES_DB.filter(m => m.category === 'topRated');
-    return topRated.slice(0, limit);
+  async getNewReleases(limitCount = 20) {
+    try {
+      const moviesRef = collection(db, 'movies');
+      const q = query(
+        moviesRef,
+        where('isNewRelease', '==', true),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error fetching new releases:', error);
+      return [];
+    }
   },
 
-  async getRecommended(limit = 20) {
-    const recommended = MOVIES_DB.filter(m => m.category === 'trending' || m.category === 'topRated');
-    return recommended.slice(0, limit);
+  async getTopRated(limitCount = 20) {
+    try {
+      const moviesRef = collection(db, 'movies');
+      const q = query(
+        moviesRef,
+        orderBy('rating', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error fetching top rated movies:', error);
+      return [];
+    }
   },
 
-  async getByGenre(genre, limit = 20) {
-    const genreKeywords = GENRE_MAP[genre] || [genre];
-    const filtered = MOVIES_DB.filter(movie =>
-      movie.genres.some(g => genreKeywords.includes(g))
-    );
-    return filtered.slice(0, limit);
+  async getRecommended(limitCount = 20) {
+    try {
+      const moviesRef = collection(db, 'movies');
+      const q = query(
+        moviesRef,
+        where('isRecommended', '==', true),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error fetching recommended movies:', error);
+      return [];
+    }
   },
 
-  async getRecentlyAdded(limit = 20) {
-    return MOVIES_DB.slice(0, limit);
+  async getByGenre(genre, limitCount = 20) {
+    try {
+      const moviesRef = collection(db, 'movies');
+      const q = query(
+        moviesRef,
+        where('genres', 'array-contains', genre),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error fetching movies by genre:', error);
+      return [];
+    }
   },
 
-  async search(query) {
-    const searchLower = query.toLowerCase();
-    return MOVIES_DB.filter(movie =>
-      movie.title.toLowerCase().includes(searchLower) ||
-      movie.genres.some(g => g.toLowerCase().includes(searchLower))
-    );
+  async getRecentlyAdded(limitCount = 20) {
+    try {
+      const moviesRef = collection(db, 'movies');
+      const q = query(
+        moviesRef,
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error fetching recently added movies:', error);
+      return [];
+    }
   },
 
   async getFeatured() {
-    return MOVIES_DB.find(m => m.featured) || MOVIES_DB[0];
+    try {
+      const moviesRef = collection(db, 'movies');
+      const q = query(
+        moviesRef,
+        where('isFeatured', '==', true),
+        limit(1)
+      );
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching featured movie:', error);
+      return null;
+    }
+  },
+
+  async getHeroBanners() {
+    try {
+      const bannersRef = collection(db, 'heroBanners');
+      const q = query(
+        bannersRef,
+        orderBy('order', 'asc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error fetching hero banners:', error);
+      return [];
+    }
+  },
+
+  async search(queryText) {
+    try {
+      const moviesRef = collection(db, 'movies');
+      const snapshot = await getDocs(moviesRef);
+      const allMovies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      const searchLower = queryText.toLowerCase();
+      return allMovies.filter(movie =>
+        movie.title?.toLowerCase().includes(searchLower) ||
+        movie.genres?.some(g => g.toLowerCase().includes(searchLower)) ||
+        movie.description?.toLowerCase().includes(searchLower)
+      );
+    } catch (error) {
+      console.error('Error searching movies:', error);
+      return [];
+    }
   }
 };
