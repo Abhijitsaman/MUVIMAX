@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FiPlay, FiInfo, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiPlay, FiInfo, FiChevronLeft, FiChevronRight, FiImage } from 'react-icons/fi';
 import { useLanguage } from '../context/LanguageContext';
 import { movieService } from '../services/movieService';
 import './HeroBanner.css';
 
 const HeroBanner = () => {
-  const [movies, setMovies] = useState([]);
+  const [banners, setBanners] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -18,44 +18,46 @@ const HeroBanner = () => {
   const touchEndX = useRef(0);
 
   useEffect(() => {
-    const fetchFeatured = async () => {
+    const fetchBanners = async () => {
       try {
-        const data = await movieService.getTrending(5);
-        setMovies(data);
+        const data = await movieService.getHeroBanners();
+        setBanners(data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching featured movies:', error);
+        console.error('Error fetching hero banners:', error);
         setLoading(false);
       }
     };
-    fetchFeatured();
+    fetchBanners();
   }, []);
 
   useEffect(() => {
-    if (isPaused || loading || movies.length === 0) return;
+    if (isPaused || loading || banners.length === 0 || banners.length === 1) return;
 
     timerRef.current = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % movies.length);
+      setCurrentIndex((prev) => (prev + 1) % banners.length);
     }, 6000);
 
     return () => clearInterval(timerRef.current);
-  }, [isPaused, loading, movies.length]);
+  }, [isPaused, loading, banners.length]);
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + movies.length) % movies.length);
+    if (banners.length === 0) return;
+    setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
     resetTimer();
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % movies.length);
+    if (banners.length === 0) return;
+    setCurrentIndex((prev) => (prev + 1) % banners.length);
     resetTimer();
   };
 
   const resetTimer = () => {
     clearInterval(timerRef.current);
-    if (!isPaused && movies.length > 0) {
+    if (!isPaused && banners.length > 0 && banners.length > 1) {
       timerRef.current = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % movies.length);
+        setCurrentIndex((prev) => (prev + 1) % banners.length);
       }, 6000);
     }
   };
@@ -89,11 +91,20 @@ const HeroBanner = () => {
     );
   }
 
-  if (movies.length === 0) {
-    return null;
+  if (banners.length === 0) {
+    return (
+      <div className="hero-banner hero-banner-empty">
+        <div className="hero-banner-empty-content">
+          <FiImage size={48} />
+          <h2>No Banner Uploaded</h2>
+          <p>Hero banners will appear here once uploaded from the Admin Panel</p>
+        </div>
+        <div className="hero-banner-empty-overlay" />
+      </div>
+    );
   }
 
-  const currentMovie = movies[currentIndex];
+  const currentBanner = banners[currentIndex];
 
   return (
     <div
@@ -114,7 +125,7 @@ const HeroBanner = () => {
         >
           <div
             className="hero-banner-backdrop"
-            style={{ backgroundImage: `url(${currentMovie.backdrop})` }}
+            style={{ backgroundImage: `url(${currentBanner.imageUrl || currentBanner.backdrop})` }}
           >
             <div className="hero-banner-overlay">
               <div className="hero-banner-gradient" />
@@ -129,24 +140,28 @@ const HeroBanner = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
               >
-                {currentMovie.title}
+                {currentBanner.title || 'Untitled'}
               </motion.h1>
 
-              <motion.div
-                className="hero-banner-meta"
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <span className="hero-banner-rating">★ {currentMovie.rating}</span>
-                <span className="hero-banner-year">{currentMovie.year}</span>
-                <span className="hero-banner-runtime">{currentMovie.runtime}</span>
-                <div className="hero-banner-genres">
-                  {currentMovie.genres.slice(0, 3).map((genre) => (
-                    <span key={genre} className="hero-banner-genre">{genre}</span>
-                  ))}
-                </div>
-              </motion.div>
+              {currentBanner.rating && (
+                <motion.div
+                  className="hero-banner-meta"
+                  initial={{ y: 30, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                >
+                  <span className="hero-banner-rating">★ {currentBanner.rating}</span>
+                  {currentBanner.year && <span className="hero-banner-year">{currentBanner.year}</span>}
+                  {currentBanner.runtime && <span className="hero-banner-runtime">{currentBanner.runtime}</span>}
+                  {currentBanner.genres && currentBanner.genres.length > 0 && (
+                    <div className="hero-banner-genres">
+                      {currentBanner.genres.slice(0, 3).map((genre) => (
+                        <span key={genre} className="hero-banner-genre">{genre}</span>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
 
               <motion.p
                 className="hero-banner-description"
@@ -154,7 +169,7 @@ const HeroBanner = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
-                {currentMovie.description}
+                {currentBanner.description || 'No description available'}
               </motion.p>
 
               <motion.div
@@ -163,56 +178,64 @@ const HeroBanner = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
               >
-                <button
-                  className="hero-banner-btn hero-banner-btn-primary"
-                  onClick={() => navigate(`/watch/${currentMovie.id}`)}
-                >
-                  <FiPlay size={20} />
-                  <span>{t('watchNow')}</span>
-                </button>
-                <button
-                  className="hero-banner-btn hero-banner-btn-secondary"
-                  onClick={() => navigate(`/movie/${currentMovie.id}`)}
-                >
-                  <FiInfo size={20} />
-                  <span>{t('moreInfo')}</span>
-                </button>
+                {currentBanner.movieId && (
+                  <button
+                    className="hero-banner-btn hero-banner-btn-primary"
+                    onClick={() => navigate(`/watch/${currentBanner.movieId}`)}
+                  >
+                    <FiPlay size={20} />
+                    <span>{t('watchNow')}</span>
+                  </button>
+                )}
+                {currentBanner.movieId && (
+                  <button
+                    className="hero-banner-btn hero-banner-btn-secondary"
+                    onClick={() => navigate(`/movie/${currentBanner.movieId}`)}
+                  >
+                    <FiInfo size={20} />
+                    <span>{t('moreInfo')}</span>
+                  </button>
+                )}
               </motion.div>
             </div>
           </div>
         </motion.div>
       </AnimatePresence>
 
-      <div className="hero-banner-controls">
-        <button
-          className="hero-banner-control hero-banner-control-prev"
-          onClick={handlePrev}
-          aria-label="Previous"
-        >
-          <FiChevronLeft size={24} />
-        </button>
-        <button
-          className="hero-banner-control hero-banner-control-next"
-          onClick={handleNext}
-          aria-label="Next"
-        >
-          <FiChevronRight size={24} />
-        </button>
-      </div>
+      {banners.length > 1 && (
+        <>
+          <div className="hero-banner-controls">
+            <button
+              className="hero-banner-control hero-banner-control-prev"
+              onClick={handlePrev}
+              aria-label="Previous"
+            >
+              <FiChevronLeft size={24} />
+            </button>
+            <button
+              className="hero-banner-control hero-banner-control-next"
+              onClick={handleNext}
+              aria-label="Next"
+            >
+              <FiChevronRight size={24} />
+            </button>
+          </div>
 
-      <div className="hero-banner-dots">
-        {movies.map((_, index) => (
-          <button
-            key={index}
-            className={`hero-banner-dot ${index === currentIndex ? 'active' : ''}`}
-            onClick={() => {
-              setCurrentIndex(index);
-              resetTimer();
-            }}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
+          <div className="hero-banner-dots">
+            {banners.map((_, index) => (
+              <button
+                key={index}
+                className={`hero-banner-dot ${index === currentIndex ? 'active' : ''}`}
+                onClick={() => {
+                  setCurrentIndex(index);
+                  resetTimer();
+                }}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
