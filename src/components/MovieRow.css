@@ -1,5 +1,5 @@
 .movie-row {
-  padding: 12px 0 8px;
+  padding: 16px 0 12px;
 }
 
 .movie-row-header {
@@ -7,7 +7,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 16px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 @media (min-width: 768px) {
@@ -23,9 +23,10 @@
 }
 
 .movie-row-title {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: var(--color-text);
+  letter-spacing: 0.3px;
 }
 
 .movie-row-wrapper {
@@ -34,7 +35,7 @@
 
 .movie-row-scroll {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   padding: 4px 16px 16px;
   overflow-x: auto;
   overflow-y: visible;
@@ -51,12 +52,14 @@
 @media (min-width: 768px) {
   .movie-row-scroll {
     padding: 4px 32px 16px;
+    gap: 16px;
   }
 }
 
 @media (min-width: 1024px) {
   .movie-row-scroll {
     padding: 4px 48px 16px;
+    gap: 18px;
   }
 }
 
@@ -65,8 +68,8 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 5;
-  width: 40px;
-  height: 80px;
+  width: 44px;
+  height: 88px;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(8px);
   border: none;
@@ -76,6 +79,7 @@
   justify-content: center;
   transition: all var(--transition);
   opacity: 0;
+  cursor: pointer;
 }
 
 .movie-row-wrapper:hover .movie-row-arrow {
@@ -93,7 +97,7 @@
 }
 
 .movie-row-arrow:hover {
-  background: rgba(124, 58, 237, 0.8);
+  background: rgba(124, 58, 237, 0.85);
 }
 
 .movie-card-skeleton {
@@ -125,8 +129,7 @@
   }
 }
 
-.movie-row-error,
-.movie-row-empty {
+.movie-row-error {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -143,9 +146,36 @@
   border-radius: var(--radius-sm);
   font-weight: 600;
   transition: all var(--transition);
+  cursor: pointer;
+  border: none;
 }
 
 .movie-row-retry:hover {
   background: var(--color-primary-light);
   transform: translateY(-2px);
+}
+
+@media (max-width: 480px) {
+  .movie-row {
+    padding: 8px 0;
+  }
+
+  .movie-row-title {
+    font-size: 1.1rem;
+  }
+
+  .movie-row-scroll {
+    gap: 10px;
+    padding: 2px 12px 12px;
+  }
+
+  .movie-row-arrow {
+    width: 32px;
+    height: 60px;
+  }
+
+  .movie-row-arrow svg {
+    width: 20px;
+    height: 20px;
+  }
 }
