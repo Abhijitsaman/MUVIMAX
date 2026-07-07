@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiPlay } from 'react-icons/fi';
+import { FiPlay, FiImage } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { FirebaseService } from '../firebase/services';
 import { useLanguage } from '../context/LanguageContext';
@@ -35,12 +35,22 @@ const ContinueWatching = () => {
     fetchContinueWatching();
   }, [user, isAuthenticated]);
 
+  const formatTime = (progress) => {
+    const totalMinutes = Math.floor((progress / 100) * 120);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${minutes}m remaining`;
+    }
+    return `${minutes}m remaining`;
+  };
+
   if (loading) {
     return (
       <div className="continue-watching">
         <h2 className="continue-watching-title">{t('continueWatching')}</h2>
         <div className="continue-watching-scroll">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <div key={i} className="continue-watching-skeleton" />
           ))}
         </div>
@@ -52,21 +62,11 @@ const ContinueWatching = () => {
     return null;
   }
 
-  const formatTime = (progress) => {
-    const totalMinutes = Math.floor((progress / 100) * 120);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${minutes}m remaining`;
-    }
-    return `${minutes}m remaining`;
-  };
-
   return (
     <div className="continue-watching">
       <h2 className="continue-watching-title">{t('continueWatching')}</h2>
       <div className="continue-watching-scroll">
-        {items.map((item) => (
+        {items.slice(0, 6).map((item) => (
           <motion.div
             key={item.id}
             className="continue-watching-item"
@@ -75,15 +75,24 @@ const ContinueWatching = () => {
           >
             <Link to={`/watch/${item.movieId}`} className="continue-watching-link">
               <div className="continue-watching-poster">
-                <img
-                  src={item.movieData?.poster}
-                  alt={item.movieData?.title}
-                  loading="lazy"
-                />
+                {item.movieData?.poster ? (
+                  <img
+                    src={item.movieData.poster}
+                    alt={item.movieData?.title || 'Movie'}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="continue-watching-poster-placeholder">
+                    <FiImage size={32} />
+                  </div>
+                )}
                 <div className="continue-watching-progress-bar">
                   <div
                     className="continue-watching-progress-fill"
-                    style={{ width: `${item.progress || 0}%` }}
+                    style={{ width: `${Math.min(item.progress || 0, 95)}%` }}
                   />
                 </div>
                 <div className="continue-watching-overlay">
@@ -94,7 +103,7 @@ const ContinueWatching = () => {
               </div>
               <div className="continue-watching-info">
                 <h3 className="continue-watching-movie-title">
-                  {item.movieData?.title}
+                  {item.movieData?.title || 'Untitled'}
                 </h3>
                 <p className="continue-watching-remaining">
                   {formatTime(item.progress || 0)}
