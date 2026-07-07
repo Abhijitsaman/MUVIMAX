@@ -14,11 +14,15 @@ const MovieRow = ({ title, category, delay = 0 }) => {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
+  const DISPLAY_COUNT = 6;
+  const displayMovies = loading ? [] : movies;
+  const placeholderCount = Math.max(0, DISPLAY_COUNT - displayMovies.length);
+
   useEffect(() => {
     const checkScroll = () => {
       if (rowRef.current) {
         const { scrollLeft, scrollWidth, clientWidth } = rowRef.current;
-        setShowLeftArrow(scrollLeft > 0);
+        setShowLeftArrow(scrollLeft > 10);
         setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
       }
     };
@@ -26,7 +30,7 @@ const MovieRow = ({ title, category, delay = 0 }) => {
     const currentRow = rowRef.current;
     if (currentRow) {
       currentRow.addEventListener('scroll', checkScroll);
-      checkScroll();
+      setTimeout(checkScroll, 100);
       return () => currentRow.removeEventListener('scroll', checkScroll);
     }
   }, [movies]);
@@ -63,19 +67,6 @@ const MovieRow = ({ title, category, delay = 0 }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="movie-row">
-        <h2 className="movie-row-title">{title}</h2>
-        <div className="movie-row-scroll">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="movie-card-skeleton" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="movie-row">
@@ -90,15 +81,10 @@ const MovieRow = ({ title, category, delay = 0 }) => {
     );
   }
 
-  if (movies.length === 0) {
-    return (
-      <div className="movie-row">
-        <h2 className="movie-row-title">{title}</h2>
-        <div className="movie-row-empty">
-          <p>No movies available</p>
-        </div>
-      </div>
-    );
+  const hasContent = displayMovies.length > 0 || placeholderCount > 0;
+
+  if (!hasContent && !loading) {
+    return null;
   }
 
   return (
@@ -131,13 +117,29 @@ const MovieRow = ({ title, category, delay = 0 }) => {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          {movies.map((movie, index) => (
-            <MovieCard
-              key={movie.id}
-              movie={movie}
-              index={index}
-            />
-          ))}
+          {loading ? (
+            [...Array(DISPLAY_COUNT)].map((_, i) => (
+              <div key={i} className="movie-card-skeleton" />
+            ))
+          ) : (
+            <>
+              {displayMovies.map((movie, index) => (
+                <MovieCard
+                  key={movie.id}
+                  movie={movie}
+                  index={index}
+                />
+              ))}
+              {[...Array(placeholderCount)].map((_, i) => (
+                <MovieCard
+                  key={`placeholder-${i}`}
+                  movie={null}
+                  index={displayMovies.length + i}
+                  isPlaceholder={true}
+                />
+              ))}
+            </>
+          )}
         </div>
 
         {showRightArrow && (
