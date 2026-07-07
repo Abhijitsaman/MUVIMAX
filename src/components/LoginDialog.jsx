@@ -36,25 +36,25 @@ const LoginDialog = ({ open, onClose }) => {
           />
           <motion.div
             className="login-dialog"
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
           >
             <button className="login-close" onClick={onClose} aria-label="Close">
               <FiX size={24} />
             </button>
-            
+
             <div className="login-content">
               <div className="login-icon-wrapper">
-                <FiLogIn size={48} className="login-icon" />
+                <FiLogIn size={40} className="login-icon" />
               </div>
-              
+
               <h2 className="login-title">Welcome to MUVIMAX</h2>
               <p className="login-subtitle">
                 Sign in to access your watchlist, favorites, and personalized recommendations
               </p>
-              
+
               <button
                 className="login-google-btn"
                 onClick={handleSignIn}
@@ -63,7 +63,7 @@ const LoginDialog = ({ open, onClose }) => {
                 <FcGoogle size={24} />
                 <span>{isLoading ? 'Signing in...' : 'Sign in with Google'}</span>
               </button>
-              
+
               <button
                 className="login-guest-btn"
                 onClick={onClose}
