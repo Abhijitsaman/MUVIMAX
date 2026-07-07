@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiHeart, FiBookmark } from 'react-icons/fi';
+import { FiHeart, FiBookmark, FiImage, FiPlus } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../hooks/useFavorites';
 import { useWatchlist } from '../hooks/useWatchlist';
 import LoginDialog from './LoginDialog';
 import './MovieCard.css';
 
-const MovieCard = ({ movie, index = 0 }) => {
+const MovieCard = ({ movie, index = 0, isPlaceholder = false }) => {
   const { isAuthenticated } = useAuth();
   const { addToFavorites, removeFromFavorites, isInFavorites } = useFavorites();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
@@ -79,6 +79,30 @@ const MovieCard = ({ movie, index = 0 }) => {
     }
   };
 
+  if (isPlaceholder || !movie) {
+    return (
+      <motion.div
+        className="movie-card movie-card-placeholder"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05, duration: 0.4 }}
+      >
+        <div className="movie-card-poster movie-card-poster-placeholder">
+          <div className="movie-card-placeholder-content">
+            <FiImage size={32} />
+            <span>No Movie Uploaded</span>
+          </div>
+        </div>
+        <div className="movie-card-info">
+          <h3 className="movie-card-title-placeholder">Empty Slot</h3>
+          <div className="movie-card-meta-placeholder">
+            <span>—</span>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <>
       <motion.div
@@ -92,10 +116,14 @@ const MovieCard = ({ movie, index = 0 }) => {
         <Link to={`/movie/${movie.id}`} className="movie-card-link">
           <div className="movie-card-poster">
             <img
-              src={movie.poster}
+              src={movie.poster || movie.backdrop}
               alt={movie.title}
               loading="lazy"
               className="movie-card-image"
+              onError={(e) => {
+                e.target.src = '';
+                e.target.style.background = 'var(--color-background-secondary)';
+              }}
             />
             <div className="movie-card-overlay">
               <div className="movie-card-actions">
@@ -117,16 +145,22 @@ const MovieCard = ({ movie, index = 0 }) => {
                 </button>
               </div>
             </div>
-            <div className="movie-card-rating">
-              ★ {movie.rating}
-            </div>
+            {movie.rating && (
+              <div className="movie-card-rating">
+                ★ {typeof movie.rating === 'number' ? movie.rating.toFixed(1) : movie.rating}
+              </div>
+            )}
           </div>
           <div className="movie-card-info">
             <h3 className="movie-card-title">{movie.title}</h3>
             <div className="movie-card-meta">
-              <span className="movie-card-year">{movie.year}</span>
-              <span className="movie-card-dot">•</span>
-              <span className="movie-card-genre">{movie.genres[0]}</span>
+              {movie.year && <span className="movie-card-year">{movie.year}</span>}
+              {movie.year && movie.genres && movie.genres.length > 0 && (
+                <span className="movie-card-dot">•</span>
+              )}
+              {movie.genres && movie.genres.length > 0 && (
+                <span className="movie-card-genre">{movie.genres[0]}</span>
+              )}
             </div>
           </div>
         </Link>
