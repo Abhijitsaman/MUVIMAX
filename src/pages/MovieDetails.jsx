@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlay, FiHeart, FiBookmark, FiShare2, FiStar, FiClock, FiCalendar, FiUser, FiMessageSquare, FiX } from 'react-icons/fi';
+import { FiPlay, FiHeart, FiBookmark, FiShare2, FiStar, FiClock, FiCalendar, FiUser, FiMessageSquare, FiX, FiImage } from 'react-icons/fi';
 import { useMovieDetails } from '../hooks/useMovieDetails';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../hooks/useFavorites';
@@ -227,9 +227,12 @@ const MovieDetails = () => {
       <div className="movie-details-loading">
         <div className="movie-details-backdrop-skeleton" />
         <div className="movie-details-content-skeleton">
-          <div className="movie-details-title-skeleton" />
-          <div className="movie-details-meta-skeleton" />
-          <div className="movie-details-description-skeleton" />
+          <div className="movie-details-poster-skeleton" />
+          <div className="movie-details-info-skeleton">
+            <div className="movie-details-title-skeleton" />
+            <div className="movie-details-meta-skeleton" />
+            <div className="movie-details-description-skeleton" />
+          </div>
         </div>
       </div>
     );
@@ -238,7 +241,10 @@ const MovieDetails = () => {
   if (error || !movie) {
     return (
       <div className="movie-details-error">
-        <h2>Movie not found</h2>
+        <div className="movie-details-error-icon">
+          <FiImage size={48} />
+        </div>
+        <h2>Movie Not Found</h2>
         <p>Sorry, we couldn't find the movie you're looking for.</p>
         <button onClick={() => navigate('/')} className="btn-primary">
           Back to Home
@@ -259,7 +265,14 @@ const MovieDetails = () => {
 
         <div className="movie-details-content">
           <div className="movie-details-poster">
-            <img src={movie.poster} alt={movie.title} />
+            <img
+              src={movie.poster}
+              alt={movie.title}
+              onError={(e) => {
+                e.target.src = '';
+                e.target.style.background = 'var(--color-background-secondary)';
+              }}
+            />
           </div>
 
           <div className="movie-details-info">
@@ -278,25 +291,31 @@ const MovieDetails = () => {
               transition={{ delay: 0.1 }}
             >
               <span className="movie-details-rating">
-                <FiStar /> {averageRating > 0 ? averageRating.toFixed(1) : movie.rating}
+                <FiStar /> {averageRating > 0 ? averageRating.toFixed(1) : movie.rating || 'N/A'}
                 {ratingCount > 0 && <span className="movie-details-rating-count">({ratingCount})</span>}
               </span>
-              <span><FiCalendar /> {movie.year}</span>
-              <span><FiClock /> {movie.runtime}</span>
+              {movie.year && (
+                <span><FiCalendar /> {movie.year}</span>
+              )}
+              {movie.runtime && (
+                <span><FiClock /> {movie.runtime}</span>
+              )}
             </motion.div>
 
-            <motion.div
-              className="movie-details-genres"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              {movie.genres.map((genre) => (
-                <span key={genre} className="movie-details-genre">
-                  {genre}
-                </span>
-              ))}
-            </motion.div>
+            {movie.genres && movie.genres.length > 0 && (
+              <motion.div
+                className="movie-details-genres"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                {movie.genres.map((genre) => (
+                  <span key={genre} className="movie-details-genre">
+                    {genre}
+                  </span>
+                ))}
+              </motion.div>
+            )}
 
             <motion.p
               className="movie-details-description"
@@ -304,7 +323,7 @@ const MovieDetails = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              {movie.description}
+              {movie.description || 'No description available for this movie.'}
             </motion.p>
 
             <motion.div
@@ -325,6 +344,7 @@ const MovieDetails = () => {
                 className={`movie-details-btn ${isFavorite ? 'active' : ''}`}
                 onClick={handleFavoriteToggle}
                 disabled={isLoading}
+                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
                 <FiHeart size={20} fill={isFavorite ? '#7c3aed' : 'none'} />
                 <span>{isFavorite ? t('unlike') : t('like')}</span>
@@ -334,6 +354,7 @@ const MovieDetails = () => {
                 className={`movie-details-btn ${isWatchlisted ? 'active' : ''}`}
                 onClick={handleWatchlistToggle}
                 disabled={isLoading}
+                aria-label={isWatchlisted ? 'Remove from watchlist' : 'Add to watchlist'}
               >
                 <FiBookmark size={20} fill={isWatchlisted ? '#7c3aed' : 'none'} />
                 <span>{isWatchlisted ? t('removeFromWatchlist') : t('addToWatchlist')}</span>
@@ -342,6 +363,7 @@ const MovieDetails = () => {
               <button
                 className="movie-details-btn"
                 onClick={handleShare}
+                aria-label="Share"
               >
                 <FiShare2 size={20} />
                 <span>{t('share')}</span>
@@ -389,6 +411,18 @@ const MovieDetails = () => {
                     </div>
                   ))}
                 </div>
+              </motion.div>
+            )}
+
+            {movie.director && (
+              <motion.div
+                className="movie-details-director"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.65 }}
+              >
+                <h4>Director</h4>
+                <p>{movie.director}</p>
               </motion.div>
             )}
           </div>
