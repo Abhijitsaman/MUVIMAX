@@ -1,14 +1,21 @@
 .home-page {
   padding-top: 72px;
   min-height: 100vh;
+  background: var(--color-background);
 }
 
 .home-section {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 @media (max-width: 768px) {
   .home-page {
     padding-top: 64px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page {
+    padding-top: 56px;
   }
 }
