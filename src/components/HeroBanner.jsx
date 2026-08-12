@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiPlay, FiInfo, FiChevronLeft, FiChevronRight, FiImage } from 'react-icons/fi';
 import { useLanguage } from '../context/LanguageContext';
 import { movieService } from '../services/movieService';
+import { getBestImageUrl } from '../utils/imageHelpers';
 import './HeroBanner.css';
 
 const HeroBanner = () => {
@@ -105,6 +106,7 @@ const HeroBanner = () => {
   }
 
   const currentBanner = banners[currentIndex];
+  const imageUrl = getBestImageUrl(currentBanner);
 
   return (
     <div
@@ -126,7 +128,7 @@ const HeroBanner = () => {
           <div
             className="hero-banner-backdrop"
             style={{
-              backgroundImage: `url(${currentBanner.image || currentBanner.imageUrl || currentBanner.backdrop})`
+              backgroundImage: `url(${imageUrl})`
             }}
           >
             <div className="hero-banner-overlay">
