@@ -35,6 +35,16 @@ const Watch = () => {
 
   const controlsTimeoutRef = useRef(null);
 
+  // Check if URL is a YouTube URL
+  const isYouTubeUrl = (url) => {
+    if (!url) return false;
+    return ReactPlayer.canPlay(url) && (
+      url.includes('youtube.com') || 
+      url.includes('youtu.be') ||
+      url.includes('youtube')
+    );
+  };
+
   useEffect(() => {
     if (isAuthenticated && user && movie) {
       const saveProgress = async () => {
@@ -177,6 +187,31 @@ const Watch = () => {
     );
   }
 
+  // Determine if the video URL is a YouTube URL
+  const videoUrl = movie.videoUrl;
+  const isYouTube = isYouTubeUrl(videoUrl);
+
+  // Build player config based on URL type
+  const playerConfig = {
+    youtube: {
+      playerVars: {
+        controls: 0,
+        rel: 0,
+        modestbranding: 1,
+        fs: 1,
+        iv_load_policy: 3,
+        cc_load_policy: 0,
+        playsinline: 1,
+      },
+    },
+    file: {
+      attributes: {
+        crossOrigin: 'anonymous',
+      },
+      forceVideo: !isYouTube,
+    },
+  };
+
   return (
     <div
       ref={containerRef}
@@ -195,7 +230,7 @@ const Watch = () => {
       <div className="watch-player-wrapper">
         <ReactPlayer
           ref={playerRef}
-          url={movie.videoUrl}
+          url={videoUrl}
           playing={playing}
           volume={volume}
           muted={muted}
@@ -208,13 +243,7 @@ const Watch = () => {
           width="100%"
           height="100%"
           controls={false}
-          config={{
-            file: {
-              attributes: {
-                crossOrigin: 'anonymous',
-              },
-            },
-          }}
+          config={playerConfig}
         />
 
         {isLoading && (
