@@ -5,6 +5,7 @@ import { FiHeart, FiBookmark, FiImage, FiPlus } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../hooks/useFavorites';
 import { useWatchlist } from '../hooks/useWatchlist';
+import { normalizeImageUrl } from '../utils/imageHelpers';
 import LoginDialog from './LoginDialog';
 import './MovieCard.css';
 
@@ -103,6 +104,8 @@ const MovieCard = ({ movie, index = 0, isPlaceholder = false }) => {
     );
   }
 
+  const posterUrl = normalizeImageUrl(movie.poster || movie.backdrop);
+
   return (
     <>
       <motion.div
@@ -115,16 +118,22 @@ const MovieCard = ({ movie, index = 0, isPlaceholder = false }) => {
       >
         <Link to={`/movie/${movie.id}`} className="movie-card-link">
           <div className="movie-card-poster">
-            <img
-              src={movie.poster || movie.backdrop}
-              alt={movie.title}
-              loading="lazy"
-              className="movie-card-image"
-              onError={(e) => {
-                e.target.src = '';
-                e.target.style.background = 'var(--color-background-secondary)';
-              }}
-            />
+            {posterUrl ? (
+              <img
+                src={posterUrl}
+                alt={movie.title}
+                loading="lazy"
+                className="movie-card-image"
+                onError={(e) => {
+                  e.target.src = '';
+                  e.target.style.background = 'var(--color-background-secondary)';
+                }}
+              />
+            ) : (
+              <div className="movie-card-placeholder-content">
+                <FiImage size={32} />
+              </div>
+            )}
             <div className="movie-card-overlay">
               <div className="movie-card-actions">
                 <button
