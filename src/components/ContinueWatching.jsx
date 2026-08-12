@@ -5,6 +5,7 @@ import { FiPlay, FiImage } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { FirebaseService } from '../firebase/services';
 import { useLanguage } from '../context/LanguageContext';
+import { normalizeImageUrl } from '../utils/imageHelpers';
 import './ContinueWatching.css';
 
 const ContinueWatching = () => {
@@ -66,52 +67,56 @@ const ContinueWatching = () => {
     <div className="continue-watching">
       <h2 className="continue-watching-title">{t('continueWatching')}</h2>
       <div className="continue-watching-scroll">
-        {items.slice(0, 6).map((item) => (
-          <motion.div
-            key={item.id}
-            className="continue-watching-item"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Link to={`/watch/${item.movieId}`} className="continue-watching-link">
-              <div className="continue-watching-poster">
-                {item.movieData?.poster ? (
-                  <img
-                    src={item.movieData.poster}
-                    alt={item.movieData?.title || 'Movie'}
-                    loading="lazy"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="continue-watching-poster-placeholder">
-                    <FiImage size={32} />
+        {items.slice(0, 6).map((item) => {
+          const thumbnailUrl = normalizeImageUrl(item.movieData?.poster || item.movieData?.thumbnail);
+          
+          return (
+            <motion.div
+              key={item.id}
+              className="continue-watching-item"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Link to={`/watch/${item.movieId}`} className="continue-watching-link">
+                <div className="continue-watching-poster">
+                  {thumbnailUrl ? (
+                    <img
+                      src={thumbnailUrl}
+                      alt={item.movieData?.title || 'Movie'}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="continue-watching-poster-placeholder">
+                      <FiImage size={32} />
+                    </div>
+                  )}
+                  <div className="continue-watching-progress-bar">
+                    <div
+                      className="continue-watching-progress-fill"
+                      style={{ width: `${Math.min(item.progress || 0, 95)}%` }}
+                    />
                   </div>
-                )}
-                <div className="continue-watching-progress-bar">
-                  <div
-                    className="continue-watching-progress-fill"
-                    style={{ width: `${Math.min(item.progress || 0, 95)}%` }}
-                  />
+                  <div className="continue-watching-overlay">
+                    <button className="continue-watching-play-btn">
+                      <FiPlay size={24} />
+                    </button>
+                  </div>
                 </div>
-                <div className="continue-watching-overlay">
-                  <button className="continue-watching-play-btn">
-                    <FiPlay size={24} />
-                  </button>
+                <div className="continue-watching-info">
+                  <h3 className="continue-watching-movie-title">
+                    {item.movieData?.title || 'Untitled'}
+                  </h3>
+                  <p className="continue-watching-remaining">
+                    {formatTime(item.progress || 0)}
+                  </p>
                 </div>
-              </div>
-              <div className="continue-watching-info">
-                <h3 className="continue-watching-movie-title">
-                  {item.movieData?.title || 'Untitled'}
-                </h3>
-                <p className="continue-watching-remaining">
-                  {formatTime(item.progress || 0)}
-                </p>
-              </div>
-            </Link>
-          </motion.div>
-        ))}
+              </Link>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
