@@ -125,7 +125,9 @@ const HeroBanner = () => {
         >
           <div
             className="hero-banner-backdrop"
-            style={{ backgroundImage: `url(${currentBanner.imageUrl || currentBanner.backdrop})` }}
+            style={{
+              backgroundImage: `url(${currentBanner.image || currentBanner.imageUrl || currentBanner.backdrop})`
+            }}
           >
             <div className="hero-banner-overlay">
               <div className="hero-banner-gradient" />
