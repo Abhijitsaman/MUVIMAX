@@ -9,6 +9,18 @@ import { FirebaseService } from '../firebase/services';
 import { useLanguage } from '../context/LanguageContext';
 import './Watch.css';
 
+// Extracts the src URL from a raw <iframe> embed code, if the videoUrl is one
+const extractIframeSrc = (raw) => {
+  if (!raw || typeof raw !== 'string') return null;
+  const match = raw.match(/src=["']([^"']+)["']/i);
+  return match ? match[1] : null;
+};
+
+const isIframeEmbedCode = (raw) => {
+  if (!raw || typeof raw !== 'string') return false;
+  return raw.trim().startsWith('<iframe');
+};
+
 const Watch = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,7 +33,8 @@ const Watch = () => {
   
   const [playing, setPlaying] = useState(true);
   const [volume, setVolume] = useState(0.8);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -67,6 +80,11 @@ const Watch = () => {
   }, []);
 
   const handlePlayPause = () => {
+    // First tap unmutes and confirms user-initiated playback (needed for mobile autoplay policies)
+    if (!hasStartedPlayback) {
+      setHasStartedPlayback(true);
+      setMuted(false);
+    }
     setPlaying(!playing);
     resetControlsTimer();
   };
@@ -187,8 +205,43 @@ const Watch = () => {
     );
   }
 
-  // Determine if the video URL is a YouTube URL
-  const videoUrl = movie.videoUrl;
+  const rawVideoUrl = movie.videoUrl;
+
+  // Case 1: The saved value is a raw <iframe> embed code (e.g. from screenapp.io)
+  if (isIframeEmbedCode(rawVideoUrl)) {
+    const iframeSrc = extractIframeSrc(rawVideoUrl);
+    return (
+      <div ref={containerRef} className="watch-container">
+        <button
+          className="watch-back-btn"
+          onClick={() => navigate(-1)}
+          aria-label="Go back"
+        >
+          <FiArrowLeft size={24} />
+        </button>
+        <div className="watch-player-wrapper">
+          {iframeSrc ? (
+            <iframe
+              src={iframeSrc}
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              allow="autoplay; fullscreen"
+              allowFullScreen
+              style={{ border: 'none' }}
+              title={movie.title}
+            />
+          ) : (
+            <div className="watch-error-overlay">
+              <p>Invalid video embed code.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const videoUrl = rawVideoUrl;
   const isYouTube = isYouTubeUrl(videoUrl);
 
   // Build player config based on URL type
@@ -240,6 +293,7 @@ const Watch = () => {
           onError={handleError}
           onBuffer={() => setIsLoading(true)}
           onBufferEnd={() => setIsLoading(false)}
+          onReady={() => setIsLoading(false)}
           width="100%"
           height="100%"
           controls={false}
@@ -251,6 +305,12 @@ const Watch = () => {
             <div className="watch-buffer-spinner" />
             <p>Buffering...</p>
           </div>
+        )}
+
+        {muted && !hasStartedPlayback && !isLoading && (
+          <button className="watch-unmute-hint" onClick={handlePlayPause}>
+            Tap to play with sound
+          </button>
         )}
 
         {error && (
