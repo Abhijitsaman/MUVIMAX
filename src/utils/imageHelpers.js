@@ -66,7 +66,8 @@ export const normalizeImageUrl = (url) => {
   if (isGoogleDriveUrl(trimmedUrl)) {
     const fileId = extractGoogleDriveFileId(trimmedUrl);
     if (fileId) {
-      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+      // Use googleusercontent.com format - much more reliable for direct image embedding
+      return `https://lh3.googleusercontent.com/d/${fileId}`;
     }
     // If we can't extract the ID, return the original URL
     // (it will likely fail, but we'll let the browser handle it)
