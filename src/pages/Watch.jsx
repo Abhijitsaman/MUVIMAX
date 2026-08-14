@@ -21,6 +21,9 @@ const isIframeEmbedCode = (raw) => {
   return raw.trim().startsWith('<iframe');
 };
 
+// How long to wait stuck on "Buffering..." before showing a diagnostic error
+const BUFFER_TIMEOUT_MS = 8000;
+
 const Watch = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -44,11 +47,12 @@ const Watch = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
 
   const controlsTimeoutRef = useRef(null);
+  const bufferTimeoutRef = useRef(null);
 
-  // Check if URL is a YouTube URL
   const isYouTubeUrl = (url) => {
     if (!url) return false;
     return ReactPlayer.canPlay(url) && (
@@ -79,8 +83,21 @@ const Watch = () => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Buffer timeout watchdog: if stuck loading too long, surface a diagnostic error
+  useEffect(() => {
+    if (isLoading && !error) {
+      bufferTimeoutRef.current = setTimeout(() => {
+        setError('TIMEOUT');
+        setDebugInfo(prev => ({
+          ...(prev || {}),
+          reason: `Video did not start playing within ${BUFFER_TIMEOUT_MS / 1000} seconds. This usually means the video URL is invalid, blocked, or the source does not allow embedding.`
+        }));
+      }, BUFFER_TIMEOUT_MS);
+    }
+    return () => clearTimeout(bufferTimeoutRef.current);
+  }, [isLoading, error, retryCount]);
+
   const handlePlayPause = () => {
-    // First tap unmutes and confirms user-initiated playback (needed for mobile autoplay policies)
     if (!hasStartedPlayback) {
       setHasStartedPlayback(true);
       setMuted(false);
@@ -166,13 +183,30 @@ const Watch = () => {
     }
   };
 
-  const handleError = (err) => {
-    setError('Failed to load video. Please try again.');
+  const handleError = (err, data, hlsInstance, hlsGlobal) => {
+    clearTimeout(bufferTimeoutRef.current);
+    setError('PLAYER_ERROR');
+    let details = '';
+    try {
+      if (err && typeof err === 'object') {
+        details = JSON.stringify(err, Object.getOwnPropertyNames(err), 2);
+      } else {
+        details = String(err);
+      }
+    } catch (e) {
+      details = 'Could not stringify error object: ' + String(err);
+    }
+    setDebugInfo(prev => ({
+      ...(prev || {}),
+      reason: 'The player reported an error while loading the video.',
+      rawError: details
+    }));
     setIsLoading(false);
   };
 
   const handleRetry = () => {
     setError(null);
+    setDebugInfo(null);
     setIsLoading(true);
     setRetryCount(retryCount + 1);
     setPlaying(true);
@@ -205,7 +239,95 @@ const Watch = () => {
     );
   }
 
-  const rawVideoUrl = movie.videoUrl;
+  const rawVideoUrl = movie.videoSource || movie.videoUrl;
+
+  // Diagnostic error panel — shown instead of the player when something is wrong
+  const renderDiagnosticError = () => (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        background: '#0a0a0a',
+        color: '#ff6b6b',
+        padding: '20px',
+        overflowY: 'auto',
+        fontSize: '13px',
+        lineHeight: 1.6,
+        wordBreak: 'break-all',
+        zIndex: 20
+      }}
+    >
+      <h3 style={{ color: '#ff4444', marginBottom: '12px' }}>⚠️ Video Playback Error</h3>
+      <p style={{ color: '#fff', marginBottom: '8px' }}>
+        <strong>Reason:</strong> {debugInfo?.reason || 'Unknown error'}
+      </p>
+      <hr style={{ border: '1px solid #333', margin: '12px 0' }} />
+      <p style={{ color: '#aaa', marginBottom: '4px' }}><strong>Movie ID:</strong> {id}</p>
+      <p style={{ color: '#aaa', marginBottom: '4px' }}><strong>movie.videoSource:</strong> {String(movie.videoSource || '(empty)')}</p>
+      <p style={{ color: '#aaa', marginBottom: '4px' }}><strong>movie.videoUrl:</strong> {String(movie.videoUrl || '(empty)')}</p>
+      <p style={{ color: '#aaa', marginBottom: '4px' }}><strong>Resolved rawVideoUrl:</strong> {String(rawVideoUrl || '(empty — nothing to play)')}</p>
+      <p style={{ color: '#aaa', marginBottom: '4px' }}>
+        <strong>Detected type:</strong>{' '}
+        {isIframeEmbedCode(rawVideoUrl) ? 'iframe embed code' : isYouTubeUrl(rawVideoUrl) ? 'YouTube URL' : rawVideoUrl ? 'Direct file/other URL' : 'No URL found'}
+      </p>
+      {debugInfo?.rawError && (
+        <>
+          <hr style={{ border: '1px solid #333', margin: '12px 0' }} />
+          <p style={{ color: '#aaa', marginBottom: '4px' }}><strong>Raw player error:</strong></p>
+          <pre style={{ whiteSpace: 'pre-wrap', color: '#ff9999', background: '#1a1a1a', padding: '8px', borderRadius: '4px' }}>
+            {debugInfo.rawError}
+          </pre>
+        </>
+      )}
+      <button
+        onClick={handleRetry}
+        style={{
+          marginTop: '16px',
+          padding: '10px 20px',
+          background: '#e50914',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '6px',
+          fontSize: '14px'
+        }}
+      >
+        Retry
+      </button>
+      <button
+        onClick={() => navigate(-1)}
+        style={{
+          marginTop: '16px',
+          marginLeft: '8px',
+          padding: '10px 20px',
+          background: '#333',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '6px',
+          fontSize: '14px'
+        }}
+      >
+        Go Back
+      </button>
+    </div>
+  );
+
+  // Case 0: No video URL at all
+  if (!rawVideoUrl) {
+    if (!debugInfo) {
+      setDebugInfo({ reason: 'No video source was found on this movie record at all (both videoSource and videoUrl are empty).' });
+    }
+    if (error !== 'NO_URL') setError('NO_URL');
+    return (
+      <div ref={containerRef} className="watch-container">
+        <button className="watch-back-btn" onClick={() => navigate(-1)} aria-label="Go back">
+          <FiArrowLeft size={24} />
+        </button>
+        <div className="watch-player-wrapper" style={{ position: 'relative' }}>
+          {renderDiagnosticError()}
+        </div>
+      </div>
+    );
+  }
 
   // Case 1: The saved value is a raw <iframe> embed code (e.g. from screenapp.io)
   if (isIframeEmbedCode(rawVideoUrl)) {
@@ -219,7 +341,7 @@ const Watch = () => {
         >
           <FiArrowLeft size={24} />
         </button>
-        <div className="watch-player-wrapper">
+        <div className="watch-player-wrapper" style={{ position: 'relative' }}>
           {iframeSrc ? (
             <iframe
               src={iframeSrc}
@@ -232,9 +354,7 @@ const Watch = () => {
               title={movie.title}
             />
           ) : (
-            <div className="watch-error-overlay">
-              <p>Invalid video embed code.</p>
-            </div>
+            renderDiagnosticError() || setDebugInfo({ reason: 'Could not extract a src URL from the saved iframe embed code.' })
           )}
         </div>
       </div>
@@ -244,7 +364,6 @@ const Watch = () => {
   const videoUrl = rawVideoUrl;
   const isYouTube = isYouTubeUrl(videoUrl);
 
-  // Build player config based on URL type
   const playerConfig = {
     youtube: {
       playerVars: {
@@ -280,177 +399,176 @@ const Watch = () => {
         <FiArrowLeft size={24} />
       </button>
 
-      <div className="watch-player-wrapper">
-        <ReactPlayer
-          ref={playerRef}
-          url={videoUrl}
-          playing={playing}
-          volume={volume}
-          muted={muted}
-          playbackRate={playbackSpeed}
-          onProgress={handleProgress}
-          onDuration={handleDuration}
-          onError={handleError}
-          onBuffer={() => setIsLoading(true)}
-          onBufferEnd={() => setIsLoading(false)}
-          onReady={() => setIsLoading(false)}
-          width="100%"
-          height="100%"
-          controls={false}
-          config={playerConfig}
-        />
+      <div className="watch-player-wrapper" style={{ position: 'relative' }}>
+        {error ? (
+          renderDiagnosticError()
+        ) : (
+          <>
+            <ReactPlayer
+              ref={playerRef}
+              url={videoUrl}
+              playing={playing}
+              volume={volume}
+              muted={muted}
+              playbackRate={playbackSpeed}
+              onProgress={handleProgress}
+              onDuration={handleDuration}
+              onError={handleError}
+              onBuffer={() => setIsLoading(true)}
+              onBufferEnd={() => setIsLoading(false)}
+              onReady={() => setIsLoading(false)}
+              width="100%"
+              height="100%"
+              controls={false}
+              config={playerConfig}
+            />
 
-        {isLoading && (
-          <div className="watch-buffer">
-            <div className="watch-buffer-spinner" />
-            <p>Buffering...</p>
-          </div>
-        )}
+            {isLoading && (
+              <div className="watch-buffer">
+                <div className="watch-buffer-spinner" />
+                <p>Buffering...</p>
+              </div>
+            )}
 
-        {muted && !hasStartedPlayback && !isLoading && (
-          <button className="watch-unmute-hint" onClick={handlePlayPause}>
-            Tap to play with sound
-          </button>
-        )}
-
-        {error && (
-          <div className="watch-error-overlay">
-            <p>{error}</p>
-            <button onClick={handleRetry} className="watch-retry-btn">
-              Retry
-            </button>
-          </div>
+            {muted && !hasStartedPlayback && !isLoading && (
+              <button className="watch-unmute-hint" onClick={handlePlayPause}>
+                Tap to play with sound
+              </button>
+            )}
+          </>
         )}
       </div>
 
-      <motion.div
-        className={`watch-controls ${controlsVisible ? 'visible' : 'hidden'}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: controlsVisible ? 1 : 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="watch-controls-top">
-          <span className="watch-title">{movie.title}</span>
-        </div>
-
-        <div className="watch-controls-center">
-          <button
-            className="watch-control-btn watch-control-btn-large"
-            onClick={handleSkipBackward}
-            aria-label="Skip backward 10 seconds"
-          >
-            <FiSkipBack size={28} />
-          </button>
-
-          <button
-            className="watch-control-btn watch-control-btn-play"
-            onClick={handlePlayPause}
-            aria-label={playing ? 'Pause' : 'Play'}
-          >
-            {playing ? <FiPause size={40} /> : <FiPlay size={40} />}
-          </button>
-
-          <button
-            className="watch-control-btn watch-control-btn-large"
-            onClick={handleSkipForward}
-            aria-label="Skip forward 10 seconds"
-          >
-            <FiSkipForward size={28} />
-          </button>
-        </div>
-
-        <div className="watch-controls-bottom">
-          <div className="watch-progress-bar" onClick={handleSeek}>
-            <div
-              className="watch-progress-fill"
-              style={{ width: `${progress * 100}%` }}
-            />
-            <div
-              className="watch-progress-handle"
-              style={{ left: `${progress * 100}%` }}
-            />
+      {!error && (
+        <motion.div
+          className={`watch-controls ${controlsVisible ? 'visible' : 'hidden'}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: controlsVisible ? 1 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="watch-controls-top">
+            <span className="watch-title">{movie.title}</span>
           </div>
 
-          <div className="watch-controls-bottom-row">
-            <div className="watch-controls-left">
-              <span className="watch-time">
-                {formatTime(progress * duration)} / {formatTime(duration)}
-              </span>
-            </div>
+          <div className="watch-controls-center">
+            <button
+              className="watch-control-btn watch-control-btn-large"
+              onClick={handleSkipBackward}
+              aria-label="Skip backward 10 seconds"
+            >
+              <FiSkipBack size={28} />
+            </button>
 
-            <div className="watch-controls-right">
-              <button
-                className="watch-control-btn"
-                onClick={handleToggleMute}
-                aria-label={muted ? 'Unmute' : 'Mute'}
-              >
-                {muted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
-              </button>
+            <button
+              className="watch-control-btn watch-control-btn-play"
+              onClick={handlePlayPause}
+              aria-label={playing ? 'Pause' : 'Play'}
+            >
+              {playing ? <FiPause size={40} /> : <FiPlay size={40} />}
+            </button>
 
-              <input
-                type="range"
-                className="watch-volume-slider"
-                min="0"
-                max="1"
-                step="0.01"
-                value={volume}
-                onChange={handleVolumeChange}
-                aria-label="Volume"
+            <button
+              className="watch-control-btn watch-control-btn-large"
+              onClick={handleSkipForward}
+              aria-label="Skip forward 10 seconds"
+            >
+              <FiSkipForward size={28} />
+            </button>
+          </div>
+
+          <div className="watch-controls-bottom">
+            <div className="watch-progress-bar" onClick={handleSeek}>
+              <div
+                className="watch-progress-fill"
+                style={{ width: `${progress * 100}%` }}
               />
-
-              <button
-                className="watch-control-btn"
-                onClick={() => setShowSettings(!showSettings)}
-                aria-label="Settings"
-              >
-                <FiSettings size={20} />
-              </button>
-
-              <button
-                className="watch-control-btn"
-                onClick={handleToggleFullscreen}
-                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-              >
-                {isFullscreen ? <FiMinimize size={20} /> : <FiMaximize size={20} />}
-              </button>
+              <div
+                className="watch-progress-handle"
+                style={{ left: `${progress * 100}%` }}
+              />
             </div>
+
+            <div className="watch-controls-bottom-row">
+              <div className="watch-controls-left">
+                <span className="watch-time">
+                  {formatTime(progress * duration)} / {formatTime(duration)}
+                </span>
+              </div>
+
+              <div className="watch-controls-right">
+                <button
+                  className="watch-control-btn"
+                  onClick={handleToggleMute}
+                  aria-label={muted ? 'Unmute' : 'Mute'}
+                >
+                  {muted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
+                </button>
+
+                <input
+                  type="range"
+                  className="watch-volume-slider"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  aria-label="Volume"
+                />
+
+                <button
+                  className="watch-control-btn"
+                  onClick={() => setShowSettings(!showSettings)}
+                  aria-label="Settings"
+                >
+                  <FiSettings size={20} />
+                </button>
+
+                <button
+                  className="watch-control-btn"
+                  onClick={handleToggleFullscreen}
+                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
+                  {isFullscreen ? <FiMinimize size={20} /> : <FiMaximize size={20} />}
+                </button>
+              </div>
+            </div>
+
+            {showSettings && (
+              <div className="watch-settings-menu">
+                <div className="watch-settings-group">
+                  <h4>Playback Speed</h4>
+                  <div className="watch-settings-options">
+                    {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
+                      <button
+                        key={speed}
+                        className={`watch-settings-option ${playbackSpeed === speed ? 'active' : ''}`}
+                        onClick={() => handleSpeedChange(speed)}
+                      >
+                        {speed}x
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="watch-settings-group">
+                  <h4>Quality</h4>
+                  <div className="watch-settings-options">
+                    {['auto', '1080p', '720p', '480p'].map((q) => (
+                      <button
+                        key={q}
+                        className={`watch-settings-option ${quality === q ? 'active' : ''}`}
+                        onClick={() => handleQualityChange(q)}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-
-          {showSettings && (
-            <div className="watch-settings-menu">
-              <div className="watch-settings-group">
-                <h4>Playback Speed</h4>
-                <div className="watch-settings-options">
-                  {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
-                    <button
-                      key={speed}
-                      className={`watch-settings-option ${playbackSpeed === speed ? 'active' : ''}`}
-                      onClick={() => handleSpeedChange(speed)}
-                    >
-                      {speed}x
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="watch-settings-group">
-                <h4>Quality</h4>
-                <div className="watch-settings-options">
-                  {['auto', '1080p', '720p', '480p'].map((q) => (
-                    <button
-                      key={q}
-                      className={`watch-settings-option ${quality === q ? 'active' : ''}`}
-                      onClick={() => handleQualityChange(q)}
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 };
