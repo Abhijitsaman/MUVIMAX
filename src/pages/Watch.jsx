@@ -51,11 +51,11 @@ const Watch = () => {
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const { movie, loading } = useMovieDetails(id);
-  
+
   const playerRef = useRef(null);
   const containerRef = useRef(null);
   const progressBarRef = useRef(null);
-  
+
   const [playing, setPlaying] = useState(true);
   const [volume, setVolume] = useState(0.8);
   const [muted, setMuted] = useState(true);
@@ -80,7 +80,7 @@ const Watch = () => {
   const isYouTubeUrl = (url) => {
     if (!url) return false;
     return ReactPlayer.canPlay(url) && (
-      url.includes('youtube.com') || 
+      url.includes('youtube.com') ||
       url.includes('youtu.be') ||
       url.includes('youtube')
     );
@@ -143,7 +143,7 @@ const Watch = () => {
     setDuration(duration);
   };
 
-  // ---- Draggable seek bar (works for both mouse and touch via Pointer Events) ----
+  // ---- Draggable seek bar (works for both mouse and touch) ----
   const getProgressFromClientX = (clientX) => {
     const bar = progressBarRef.current;
     if (!bar) return 0;
@@ -154,6 +154,7 @@ const Watch = () => {
 
   const handleSeekPointerDown = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     wasPlayingBeforeSeekRef.current = playing;
     setIsSeeking(true);
     setPlaying(false);
@@ -249,14 +250,18 @@ const Watch = () => {
     resetControlsTimer();
   };
 
-  const handleContainerTap = (e) => {
-    // Ignore taps that originated on a control button (they handle their own logic)
-    if (e.target.closest('.watch-controls')) return;
+  const toggleControlsVisible = () => {
     setControlsVisible(prev => {
       const next = !prev;
       if (next) resetControlsTimer();
       return next;
     });
+  };
+
+  const handleContainerTap = (e) => {
+    // Ignore taps that originated on a control button (they handle their own logic)
+    if (e.target.closest('.watch-controls')) return;
+    toggleControlsVisible();
   };
 
   const resetControlsTimer = () => {
@@ -508,6 +513,24 @@ const Watch = () => {
               config={playerConfig}
             />
 
+            {/* Invisible tap-catcher layer for YouTube — YouTube's own iframe swallows
+                taps before they reach this container, so this layer sits on top and
+                takes every tap itself to toggle the controls. */}
+            {isYouTube && (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleControlsVisible();
+                }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 5,
+                  background: 'transparent'
+                }}
+              />
+            )}
+
             {isLoading && (
               <div className="watch-buffer">
                 <div className="watch-buffer-spinner" />
@@ -519,6 +542,7 @@ const Watch = () => {
               <button
                 className="watch-unmute-hint"
                 onClick={(e) => { e.stopPropagation(); handlePlayPause(); }}
+                style={{ zIndex: 10, position: 'relative' }}
               >
                 Tap to play with sound
               </button>
@@ -534,6 +558,7 @@ const Watch = () => {
           animate={{ opacity: controlsVisible ? 1 : 0 }}
           transition={{ duration: 0.3 }}
           onClick={(e) => e.stopPropagation()}
+          style={{ zIndex: 15, position: 'relative' }}
         >
           <div className="watch-controls-top">
             <span className="watch-title">{movie.title}</span>
