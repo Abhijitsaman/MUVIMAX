@@ -244,18 +244,18 @@ const Watch = () => {
     resetControlsTimer();
   };
 
-  // Show controls on mouse move (desktop) AND on tap (mobile)
-  const handleMouseMove = () => {
-    setControlsVisible(true);
-    resetControlsTimer();
-  };
-
   const toggleControlsVisible = () => {
     setControlsVisible(prev => {
       const next = !prev;
       if (next) resetControlsTimer();
       return next;
     });
+  };
+
+  // Show controls on mouse move (desktop) AND on tap (mobile)
+  const handleMouseMove = () => {
+    setControlsVisible(true);
+    resetControlsTimer();
   };
 
   const handleContainerTap = (e) => {
@@ -511,25 +511,8 @@ const Watch = () => {
               height="100%"
               controls={false}
               config={playerConfig}
+              style={isYouTube ? { pointerEvents: 'none' } : undefined}
             />
-
-            {/* Invisible tap-catcher layer for YouTube — YouTube's own iframe swallows
-                taps before they reach this container, so this layer sits on top and
-                takes every tap itself to toggle the controls. */}
-            {isYouTube && (
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleControlsVisible();
-                }}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  zIndex: 5,
-                  background: 'transparent'
-                }}
-              />
-            )}
 
             {isLoading && (
               <div className="watch-buffer">
@@ -542,7 +525,6 @@ const Watch = () => {
               <button
                 className="watch-unmute-hint"
                 onClick={(e) => { e.stopPropagation(); handlePlayPause(); }}
-                style={{ zIndex: 10, position: 'relative' }}
               >
                 Tap to play with sound
               </button>
@@ -558,7 +540,6 @@ const Watch = () => {
           animate={{ opacity: controlsVisible ? 1 : 0 }}
           transition={{ duration: 0.3 }}
           onClick={(e) => e.stopPropagation()}
-          style={{ zIndex: 15, position: 'relative' }}
         >
           <div className="watch-controls-top">
             <span className="watch-title">{movie.title}</span>
