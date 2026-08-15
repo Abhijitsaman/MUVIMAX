@@ -468,7 +468,7 @@ const Watch = () => {
             allowFullScreen
             style={{ border: 'none' }}
             title={movie.title}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+           
           />
         </div>
       </div>
