@@ -9,6 +9,16 @@ import { FirebaseService } from '../firebase/services';
 import { useLanguage } from '../context/LanguageContext';
 import './Watch.css';
 
+// IFRAME-ONLY DOMAINS - যেসব ডোমেইন শুধু iframe হিসেবে কাজ করে
+const IFRAME_ONLY_DOMAINS = [
+  'screenapp.io',
+  'loom.com',
+  'streamable.com',
+  'vimeo.com/video',
+  'streamtape.site',
+  'streamtape.com'
+];
+
 // Extracts the src URL from a raw <iframe> embed code, if the videoUrl is one
 const extractIframeSrc = (raw) => {
   if (!raw || typeof raw !== 'string') return null;
@@ -19,6 +29,12 @@ const extractIframeSrc = (raw) => {
 const isIframeEmbedCode = (raw) => {
   if (!raw || typeof raw !== 'string') return false;
   return raw.trim().startsWith('<iframe');
+};
+
+// ডোমেইন চেক করার ফাংশন
+const isIframeOnlyDomain = (url) => {
+  if (!url || typeof url !== 'string') return false;
+  return IFRAME_ONLY_DOMAINS.some(domain => url.includes(domain));
 };
 
 // How long to wait stuck on "Buffering..." before showing a diagnostic error
@@ -268,7 +284,10 @@ const Watch = () => {
       <p style={{ color: '#aaa', marginBottom: '4px' }}><strong>Resolved rawVideoUrl:</strong> {String(rawVideoUrl || '(empty — nothing to play)')}</p>
       <p style={{ color: '#aaa', marginBottom: '4px' }}>
         <strong>Detected type:</strong>{' '}
-        {isIframeEmbedCode(rawVideoUrl) ? 'iframe embed code' : isYouTubeUrl(rawVideoUrl) ? 'YouTube URL' : rawVideoUrl ? 'Direct file/other URL' : 'No URL found'}
+        {isIframeEmbedCode(rawVideoUrl) ? 'iframe embed code' : 
+         isIframeOnlyDomain(rawVideoUrl) ? 'iframe-only domain' :
+         isYouTubeUrl(rawVideoUrl) ? 'YouTube URL' : 
+         rawVideoUrl ? 'Direct file/other URL' : 'No URL found'}
       </p>
       {debugInfo?.rawError && (
         <>
@@ -356,6 +375,36 @@ const Watch = () => {
           ) : (
             renderDiagnosticError() || setDebugInfo({ reason: 'Could not extract a src URL from the saved iframe embed code.' })
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // NEW: Case 1.5 - Check if URL is from iframe-only domain (streamtape, etc.)
+  if (isIframeOnlyDomain(rawVideoUrl)) {
+    // Try to extract iframe src if it's an embed URL, otherwise use as is
+    const iframeSrc = extractIframeSrc(rawVideoUrl) || rawVideoUrl;
+    return (
+      <div ref={containerRef} className="watch-container">
+        <button
+          className="watch-back-btn"
+          onClick={() => navigate(-1)}
+          aria-label="Go back"
+        >
+          <FiArrowLeft size={24} />
+        </button>
+        <div className="watch-player-wrapper" style={{ position: 'relative' }}>
+          <iframe
+            src={iframeSrc}
+            width="100%"
+            height="100%"
+            frameBorder="0"
+            allow="autoplay; fullscreen"
+            allowFullScreen
+            style={{ border: 'none' }}
+            title={movie.title}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+          />
         </div>
       </div>
     );
