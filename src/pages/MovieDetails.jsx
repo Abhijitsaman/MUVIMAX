@@ -254,37 +254,22 @@ const MovieDetails = () => {
     );
   }
 
-  const posterUrl = normalizeImageUrl(movie.poster);
-  const backdropUrl = normalizeImageUrl(movie.backdrop);
+  // Use the thumbnail as the main hero image on this page.
+  // Falls back to poster/backdrop only if thumbnail wasn't set, so the page
+  // never shows a completely blank image area.
+  const heroImageUrl = normalizeImageUrl(movie.thumbnail || movie.poster || movie.backdrop);
 
   return (
     <>
       <div className="movie-details">
         <div
           className="movie-details-backdrop"
-          style={{ backgroundImage: `url(${backdropUrl})` }}
+          style={{ backgroundImage: `url(${heroImageUrl})` }}
         >
           <div className="movie-details-backdrop-overlay" />
         </div>
 
         <div className="movie-details-content">
-          <div className="movie-details-poster">
-            {posterUrl ? (
-              <img
-                src={posterUrl}
-                alt={movie.title}
-                onError={(e) => {
-                  e.target.src = '';
-                  e.target.style.background = 'var(--color-background-secondary)';
-                }}
-              />
-            ) : (
-              <div className="movie-details-poster-placeholder">
-                <FiImage size={48} />
-              </div>
-            )}
-          </div>
-
           <div className="movie-details-info">
             <motion.h1
               className="movie-details-title"
@@ -345,6 +330,11 @@ const MovieDetails = () => {
               <button
                 className="movie-details-btn movie-details-btn-primary"
                 onClick={() => navigate(`/watch/${movie.id}`)}
+                style={{
+                  background: 'linear-gradient(135deg, #e50914, #ff4d4d)',
+                  boxShadow: '0 4px 16px rgba(229, 9, 20, 0.5)',
+                  fontWeight: 700
+                }}
               >
                 <FiPlay size={20} />
                 <span>{t('watchNow')}</span>
