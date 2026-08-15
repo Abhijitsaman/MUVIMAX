@@ -21,27 +21,6 @@ const isIframeEmbedCode = (raw) => {
   return raw.trim().startsWith('<iframe');
 };
 
-// Known hosting platforms that serve an embeddable *page* (not a raw video file),
-// so they must always be rendered inside an <iframe>, even when saved as a plain URL.
-const IFRAME_ONLY_DOMAINS = [
-  'screenapp.io',
-  'loom.com',
-  'streamable.com',
-  'vimeo.com/video'
-];
-
-const isEmbedPageUrl = (raw) => {
-  if (!raw || typeof raw !== 'string') return false;
-  return IFRAME_ONLY_DOMAINS.some(domain => raw.includes(domain));
-};
-
-const needsIframeRender = (raw) => isIframeEmbedCode(raw) || isEmbedPageUrl(raw);
-
-const getIframeSrc = (raw) => {
-  if (isIframeEmbedCode(raw)) return extractIframeSrc(raw);
-  return raw; // plain embed-page URL, use as-is
-};
-
 // How long to wait stuck on "Buffering..." before showing a diagnostic error
 const BUFFER_TIMEOUT_MS = 8000;
 
@@ -51,11 +30,10 @@ const Watch = () => {
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const { movie, loading } = useMovieDetails(id);
-
+  
   const playerRef = useRef(null);
   const containerRef = useRef(null);
-  const progressBarRef = useRef(null);
-
+  
   const [playing, setPlaying] = useState(true);
   const [volume, setVolume] = useState(0.8);
   const [muted, setMuted] = useState(true);
@@ -71,16 +49,14 @@ const Watch = () => {
   const [error, setError] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [isSeeking, setIsSeeking] = useState(false);
 
   const controlsTimeoutRef = useRef(null);
   const bufferTimeoutRef = useRef(null);
-  const wasPlayingBeforeSeekRef = useRef(true);
 
   const isYouTubeUrl = (url) => {
     if (!url) return false;
     return ReactPlayer.canPlay(url) && (
-      url.includes('youtube.com') ||
+      url.includes('youtube.com') || 
       url.includes('youtu.be') ||
       url.includes('youtube')
     );
@@ -131,9 +107,7 @@ const Watch = () => {
   };
 
   const handleProgress = (state) => {
-    if (!isSeeking) {
-      setProgress(state.played);
-    }
+    setProgress(state.played);
     if (state.loaded > 0) {
       setIsLoading(false);
     }
@@ -143,62 +117,13 @@ const Watch = () => {
     setDuration(duration);
   };
 
-  // ---- Draggable seek bar (works for both mouse and touch) ----
-  const getProgressFromClientX = (clientX) => {
-    const bar = progressBarRef.current;
-    if (!bar) return 0;
-    const rect = bar.getBoundingClientRect();
-    const x = (clientX - rect.left) / rect.width;
-    return Math.max(0, Math.min(1, x));
-  };
-
-  const handleSeekPointerDown = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    wasPlayingBeforeSeekRef.current = playing;
-    setIsSeeking(true);
-    setPlaying(false);
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const newProgress = getProgressFromClientX(clientX);
+  const handleSeek = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const newProgress = Math.max(0, Math.min(1, x));
+    playerRef.current.seekTo(newProgress);
     setProgress(newProgress);
-    resetControlsTimer();
   };
-
-  useEffect(() => {
-    if (!isSeeking) return;
-
-    const handleMove = (e) => {
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const newProgress = getProgressFromClientX(clientX);
-      setProgress(newProgress);
-    };
-
-    const handleUp = (e) => {
-      const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-      const newProgress = getProgressFromClientX(clientX);
-      setProgress(newProgress);
-      if (playerRef.current) {
-        playerRef.current.seekTo(newProgress);
-      }
-      setIsSeeking(false);
-      if (wasPlayingBeforeSeekRef.current) {
-        setPlaying(true);
-      }
-    };
-
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleUp);
-    window.addEventListener('touchmove', handleMove, { passive: false });
-    window.addEventListener('touchend', handleUp);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
-      window.removeEventListener('touchmove', handleMove);
-      window.removeEventListener('touchend', handleUp);
-    };
-  }, [isSeeking]);
-  // ---- end draggable seek bar ----
 
   const handleSkipForward = () => {
     const currentTime = playerRef.current.getCurrentTime();
@@ -244,24 +169,9 @@ const Watch = () => {
     resetControlsTimer();
   };
 
-  const toggleControlsVisible = () => {
-    setControlsVisible(prev => {
-      const next = !prev;
-      if (next) resetControlsTimer();
-      return next;
-    });
-  };
-
-  // Show controls on mouse move (desktop) AND on tap (mobile)
   const handleMouseMove = () => {
     setControlsVisible(true);
     resetControlsTimer();
-  };
-
-  const handleContainerTap = (e) => {
-    // Ignore taps that originated on a control button (they handle their own logic)
-    if (e.target.closest('.watch-controls')) return;
-    toggleControlsVisible();
   };
 
   const resetControlsTimer = () => {
@@ -273,7 +183,7 @@ const Watch = () => {
     }
   };
 
-  const handleError = (err) => {
+  const handleError = (err, data, hlsInstance, hlsGlobal) => {
     clearTimeout(bufferTimeoutRef.current);
     setError('PLAYER_ERROR');
     let details = '';
@@ -331,6 +241,7 @@ const Watch = () => {
 
   const rawVideoUrl = movie.videoSource || movie.videoUrl;
 
+  // Diagnostic error panel — shown instead of the player when something is wrong
   const renderDiagnosticError = () => (
     <div
       style={{
@@ -357,7 +268,7 @@ const Watch = () => {
       <p style={{ color: '#aaa', marginBottom: '4px' }}><strong>Resolved rawVideoUrl:</strong> {String(rawVideoUrl || '(empty — nothing to play)')}</p>
       <p style={{ color: '#aaa', marginBottom: '4px' }}>
         <strong>Detected type:</strong>{' '}
-        {needsIframeRender(rawVideoUrl) ? 'iframe/embed-page URL' : isYouTubeUrl(rawVideoUrl) ? 'YouTube URL' : rawVideoUrl ? 'Direct file/other URL' : 'No URL found'}
+        {isIframeEmbedCode(rawVideoUrl) ? 'iframe embed code' : isYouTubeUrl(rawVideoUrl) ? 'YouTube URL' : rawVideoUrl ? 'Direct file/other URL' : 'No URL found'}
       </p>
       {debugInfo?.rawError && (
         <>
@@ -418,9 +329,9 @@ const Watch = () => {
     );
   }
 
-  // Case 1: iframe-only content — raw <iframe> code OR a known embed-page URL (e.g. screenapp.io)
-  if (needsIframeRender(rawVideoUrl)) {
-    const iframeSrc = getIframeSrc(rawVideoUrl);
+  // Case 1: The saved value is a raw <iframe> embed code (e.g. from screenapp.io)
+  if (isIframeEmbedCode(rawVideoUrl)) {
+    const iframeSrc = extractIframeSrc(rawVideoUrl);
     return (
       <div ref={containerRef} className="watch-container">
         <button
@@ -443,7 +354,7 @@ const Watch = () => {
               title={movie.title}
             />
           ) : (
-            renderDiagnosticError()
+            renderDiagnosticError() || setDebugInfo({ reason: 'Could not extract a src URL from the saved iframe embed code.' })
           )}
         </div>
       </div>
@@ -479,11 +390,10 @@ const Watch = () => {
       className="watch-container"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setControlsVisible(false)}
-      onClick={handleContainerTap}
     >
       <button
         className="watch-back-btn"
-        onClick={(e) => { e.stopPropagation(); navigate(-1); }}
+        onClick={() => navigate(-1)}
         aria-label="Go back"
       >
         <FiArrowLeft size={24} />
@@ -511,7 +421,6 @@ const Watch = () => {
               height="100%"
               controls={false}
               config={playerConfig}
-              style={isYouTube ? { pointerEvents: 'none' } : undefined}
             />
 
             {isLoading && (
@@ -522,10 +431,7 @@ const Watch = () => {
             )}
 
             {muted && !hasStartedPlayback && !isLoading && (
-              <button
-                className="watch-unmute-hint"
-                onClick={(e) => { e.stopPropagation(); handlePlayPause(); }}
-              >
+              <button className="watch-unmute-hint" onClick={handlePlayPause}>
                 Tap to play with sound
               </button>
             )}
@@ -539,7 +445,6 @@ const Watch = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: controlsVisible ? 1 : 0 }}
           transition={{ duration: 0.3 }}
-          onClick={(e) => e.stopPropagation()}
         >
           <div className="watch-controls-top">
             <span className="watch-title">{movie.title}</span>
@@ -572,13 +477,7 @@ const Watch = () => {
           </div>
 
           <div className="watch-controls-bottom">
-            <div
-              className="watch-progress-bar"
-              ref={progressBarRef}
-              onMouseDown={handleSeekPointerDown}
-              onTouchStart={handleSeekPointerDown}
-              style={{ padding: '10px 0', cursor: 'pointer' }}
-            >
+            <div className="watch-progress-bar" onClick={handleSeek}>
               <div
                 className="watch-progress-fill"
                 style={{ width: `${progress * 100}%` }}
