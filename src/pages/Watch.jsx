@@ -17,6 +17,7 @@ const IFRAME_ONLY_DOMAINS = [
   'vimeo.com/video',
   'streamtape.site',
   'streamtape.com'
+  'morencius.com'
 ];
 
 const extractIframeSrc = (raw) => {
